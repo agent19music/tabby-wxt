@@ -8,7 +8,8 @@ export default defineConfig({
     plugins: [tailwindcss()],
   }),
   manifest: {
-    permissions: ["sidePanel", "history"],
+    permissions: ["sidePanel", "history","scripting","activeTab"],
+    host_permissions: ["https://*/*","http://*/*"],
     side_panel: {
       default_path: "sidepanel.html",
     },
