@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import ShoppingPanel from "./components/ShoppingPanel";
+import SearchPanel from "./components/SearchPanel";
 import { storage } from "@wxt-dev/storage";
 type Feature = "shopping" | "search" | "stats";
 
@@ -29,11 +30,7 @@ function App() {
   return (
     <div className="min-h-screen bg-background font-manrope">
       {activeFeature === "shopping" && <ShoppingPanel />}
-      {activeFeature === "search" && (
-        <div className="p-4">
-          <h1>AI Search - Coming Soon</h1>
-        </div>
-      )}
+      {activeFeature === "search" && <SearchPanel />}
       {activeFeature === "stats" && (
         <div className="p-4">
           <h1>Stats - Coming Soon</h1>

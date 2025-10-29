@@ -28,6 +28,7 @@ interface Product {
   price: string;
   visitedAt: string;
   rating: number;
+
   category: string;
   subcategory?: string;
 }
@@ -258,13 +259,6 @@ export const ProductItem: React.FC<{ product: Product }> = ({ product }) => {
                   <ClockIcon className="w-3 h-3 text-foreground/50" />
                   <span className="text-xs text-foreground/60">
                     {new Date(product.visitedAt).toLocaleDateString()}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-1">
-                  <StarIcon className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                  <span className="text-xs font-medium text-foreground/70">
-                    {product.rating}
                   </span>
                 </div>
               </div>

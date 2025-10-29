@@ -8,6 +8,7 @@ import PastProducts from "./past_products/PastProducts";
 import { GearSixIcon, XIcon } from "@phosphor-icons/react";
 import logo from "@/assets/logo.png";
 import { Separator } from "@/components/ui/separator";
+import Cart from "./cart/Cart";
 type Props = {};
 
 export const ShoppingHeader = (props: Props) => {
@@ -37,7 +38,7 @@ export const ShoppingHeader = (props: Props) => {
 };
 
 export const ShoppingTabs = () => {
-  const tabs = ["Current Product", "Past Products"];
+  const tabs = ["Current Product", "Past Products", "Cart"];
   return (
     <Tabs
       defaultValue={tabs[0].toLowerCase().replace(" ", "")}
@@ -67,6 +68,9 @@ export const ShoppingTabs = () => {
       </TabsContent>
       <TabsContent value="pastproducts" className="flex-1 flex flex-col">
         <PastProducts />
+      </TabsContent>
+      <TabsContent value="cart" className="flex-1 flex flex-col">
+        <Cart />
       </TabsContent>
     </Tabs>
   );
