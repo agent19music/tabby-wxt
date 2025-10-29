@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Clock, Globe, TrendingUp, Calendar } from "lucide-react";
+import { SearchHistory } from "./SearchHistory";
 
 interface DomainStats {
   domain: string;
@@ -17,6 +18,7 @@ interface WeekStats {
 }
 
 function App() {
+  const [activeTab, setActiveTab] = useState<'analytics' | 'search'>('search');
   const [stats, setStats] = useState<WeekStats>({
     totalVisits: 0,
     totalTime: 0,
@@ -124,43 +126,72 @@ function App() {
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-slate-900">Browsing Stats</h1>
+          <h1 className="text-3xl font-bold text-slate-900">Tabby</h1>
           <p className="text-sm text-slate-500 flex items-center justify-center gap-2">
             <Calendar className="w-4 h-4" />
-            Past 7 days
+            AI-Powered Browsing Assistant
           </p>
         </div>
 
-        {/* Overview Cards */}
-        <div className="grid grid-cols-2 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600 flex items-center gap-2">
-                <Globe className="w-4 h-4" />
-                Total Visits
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-slate-900">
-                {stats.totalVisits.toLocaleString()}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600 flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                Time Spent
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-slate-900">
-                {formatTime(stats.totalTime)}
-              </div>
-            </CardContent>
-          </Card>
+        {/* Tab Navigation */}
+        <div className="flex gap-2 border-b border-slate-200">
+          <button
+            onClick={() => setActiveTab('search')}
+            className={`px-4 py-2 font-medium text-sm ${
+              activeTab === 'search'
+                ? 'border-b-2 border-blue-500 text-blue-600'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Search History
+          </button>
+          <button
+            onClick={() => setActiveTab('analytics')}
+            className={`px-4 py-2 font-medium text-sm ${
+              activeTab === 'analytics'
+                ? 'border-b-2 border-blue-500 text-blue-600'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Analytics
+          </button>
         </div>
+
+        {/* Tab Content */}
+        {activeTab === 'search' ? (
+          <SearchHistory />
+        ) : (
+          <>
+            {/* Overview Cards */}
+            <div className="grid grid-cols-2 gap-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-600 flex items-center gap-2">
+                    <Globe className="w-4 h-4" />
+                    Total Visits
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-slate-900">
+                    {stats.totalVisits.toLocaleString()}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-600 flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Time Spent
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-slate-900">
+                    {formatTime(stats.totalTime)}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
         {/* Top Domains */}
         <Card>
@@ -206,40 +237,42 @@ function App() {
           </CardContent>
         </Card>
 
-        {/* Daily Activity */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">
-              Daily Activity
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {stats.dailyVisits.map((day) => {
-                const maxDailyVisits = Math.max(
-                  ...stats.dailyVisits.map((d) => d.visits),
-                  1
-                );
-                return (
-                  <div key={day.day} className="space-y-1">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium text-slate-700 w-12">
-                        {day.day}
-                      </span>
-                      <span className="text-xs text-slate-500">
-                        {day.visits} visits
-                      </span>
-                    </div>
-                    <Progress
-                      value={(day.visits / maxDailyVisits) * 100}
-                      className="h-1.5"
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+            {/* Daily Activity */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold">
+                  Daily Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {stats.dailyVisits.map((day) => {
+                    const maxDailyVisits = Math.max(
+                      ...stats.dailyVisits.map((d) => d.visits),
+                      1
+                    );
+                    return (
+                      <div key={day.day} className="space-y-1">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium text-slate-700 w-12">
+                            {day.day}
+                          </span>
+                          <span className="text-xs text-slate-500">
+                            {day.visits} visits
+                          </span>
+                        </div>
+                        <Progress
+                          value={(day.visits / maxDailyVisits) * 100}
+                          className="h-1.5"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
     </div>
   );

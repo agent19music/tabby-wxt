@@ -17,9 +17,15 @@ Download from: https://www.google.com/chrome/canary/
 
 Open Chrome Canary and navigate to these URLs to enable the flags:
 
-#### Enable Prompt API
+#### Enable Prompt API (Language Model)
 ```
 chrome://flags/#prompt-api-for-gemini-nano
+```
+Set to: **Enabled**
+
+#### Enable Summarization API (NEW!)
+```
+chrome://flags/#summarization-api-for-gemini-nano
 ```
 Set to: **Enabled**
 
@@ -37,15 +43,23 @@ After enabling both flags, restart Chrome Canary completely.
 
 1. Open Chrome DevTools (F12)
 2. Go to the **Console** tab
-3. Run this command:
+3. Run these commands:
+
+**For Language Model:**
 ```javascript
 await ai.languageModel.create()
+```
+
+**For Summarizer:**
+```javascript
+await ai.summarizer.create()
 ```
 
 4. If the model needs to download, you'll see a message. Wait for the download to complete (this may take several minutes)
 5. Check the status with:
 ```javascript
 (await ai.languageModel.capabilities()).available
+(await ai.summarizer.capabilities()).available
 ```
 
 **Expected responses:**

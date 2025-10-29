@@ -1,13 +1,47 @@
 ---
-name: React with Tailwind & shadcn
-description: Simple example extension using React, Tailwind CSS, and shadcn UI components.
+name: Tabby - AI-Powered Browsing Assistant
+description: Chrome extension with AI-powered searchable history and product tracking using Gemini Nano
 ---
 
-# WXT + React + Tailwind + Shadcn
+# Tabby - AI-Powered Browsing Assistant
 
-This example demonstrates how to integrate React 19+, Tailwind CSS v4+, and shadcn UI components within a WXT extension.
+A Chrome extension that uses **on-device AI (Gemini Nano)** to create a searchable browsing history. Find pages using natural language like:
 
-## Installation Walkthrough
+> "last week I saw a beautiful blue theme SaaS dashboard design inspiration"
+
+## 🌟 Features
+
+### **Natural Language Search**
+- Search your browsing history using conversational queries
+- AI-generated descriptions for every page visited
+- Smart tagging based on page content, meta tags, and images
+- **100% on-device** - your data never leaves your browser
+
+### **Smart Product Tracking**
+- Automatically detects and tracks products across multiple sites
+- Smart duplicate detection (same product = merged, different site = allowed)
+- 3-level category normalization (e.g., Electronics → Audio → Headphones)
+- Compare prices across different websites
+
+### **Weekly Analytics**
+- Track your browsing patterns
+- See top sites and categories
+- Analyze your interests over time
+
+## 🚀 Technology Stack
+
+- **WXT Framework**: Modern Chrome extension development
+- **React 19**: UI components
+- **Tailwind CSS v4**: Styling
+- **shadcn/ui**: Component library
+- **Chrome AI APIs**:
+  - Summarizer API (tl;dr generation)
+  - Language Model API (Gemini Nano)
+- **IndexedDB**: Local storage
+
+## 📦 Installation
+
+### Development Mode
 
 1. **Initialize a new WXT project:**
 
