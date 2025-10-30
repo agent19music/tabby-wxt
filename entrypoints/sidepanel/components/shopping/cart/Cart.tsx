@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -7,68 +7,188 @@ import {
   PlusIcon,
   MinusIcon,
   ExternalLinkIcon,
+  TagIcon,
+  ChevronDownIcon,
 } from "lucide-react";
-import soundcore from "@/assets/soundcore.png";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  getCartItems,
+  removeFromCart,
+  updateCartQuantity,
+  type CartProduct,
+} from "@/components/functions/cart_handling";
 
-type CartProduct = {
-  id: string;
-  name: string;
-  image: string;
-  url: string;
-  price: number; // numeric for calculations
-  variant?: string;
+// Cart Item Component
+const CartItem: React.FC<{
+  item: CartProduct;
+  onRemove: (id: string) => void;
+}> = ({ item, onRemove }) => {
+  const [isDescOpen, setIsDescOpen] = useState(false);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -12 }}
+      transition={{ duration: 0.2 }}
+      className="p-4 bg-card rounded-2xl border border-foreground/5 hover:border-foreground/10 backdrop-blur-sm transition-all duration-200"
+    >
+      <div className="flex items-start gap-3 w-full">
+        <div className="relative shrink-0">
+          {item.image ? (
+            <img
+              src={item.image}
+              alt={item.name}
+              className="w-12 h-12 rounded-lg object-cover"
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-lg bg-foreground/5 flex items-center justify-center">
+              <TagIcon className="w-6 h-6 text-foreground/30" />
+            </div>
+          )}
+          {item.visitCount && item.visitCount > 1 && (
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-foreground rounded-full flex items-center justify-center">
+              <span className="text-[9px] font-semibold text-background">
+                {item.visitCount}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex-1 min-w-0 flex flex-col gap-2">
+          {/* Title and Actions */}
+          <div className="flex items-start justify-between gap-2 w-full">
+            <div className="flex-1 min-w-0">
+              <h5 className="font-semibold text-sm text-foreground line-clamp-2">
+                {item.name}
+              </h5>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-sm font-semibold text-foreground">
+                  {item.originalPrice || `$${item.price.toFixed(2)}`}
+                </span>
+                {item.quantity > 1 && (
+                  <span className="text-xs text-foreground/60">
+                    × {item.quantity}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-1 shrink-0">
+              <button
+                className="p-2 bg-foreground/5 hover:bg-foreground/10 rounded-full transition-colors"
+                onClick={() => window.open(item.url, "_blank")}
+                title="Open product page"
+              >
+                <ExternalLinkIcon className="w-4 h-4" />
+              </button>
+              <button
+                className="p-2 bg-foreground/5 hover:bg-foreground/10 rounded-full transition-colors"
+                onClick={() => onRemove(item.id)}
+                title="Remove from cart"
+              >
+                <Trash2Icon className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Metadata Row */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {item.visitedAt && (
+              <span className="text-xs text-foreground/60">
+                {new Date(item.visitedAt).toLocaleDateString()}
+              </span>
+            )}
+            {item.discount && (
+              <span className="text-xs text-foreground/70">{item.discount}</span>
+            )}
+          </div>
+
+          {/* Description Collapsible */}
+          {item.description && (
+            <Collapsible open={isDescOpen} onOpenChange={setIsDescOpen}>
+              <CollapsibleTrigger asChild>
+                <button className="flex items-center justify-between w-full p-2 rounded-lg bg-foreground/5 hover:bg-foreground/10 transition-colors">
+                  <span className="text-xs font-medium text-foreground/70">
+                    {isDescOpen ? "Hide" : "Show"} Description
+                  </span>
+                  <ChevronDownIcon
+                    className={`w-3 h-3 text-foreground/70 transition-transform ${
+                      isDescOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+              </CollapsibleTrigger>
+
+              <AnimatePresence>
+                {isDescOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <CollapsibleContent className="pt-2">
+                      <p className="text-xs leading-relaxed text-foreground/70">
+                        {item.description}
+                      </p>
+                    </CollapsibleContent>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </Collapsible>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
 };
 
-type CartItem = CartProduct & { quantity: number };
-
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency: "USD",
-  }).format(amount);
-
-const initialItems: CartItem[] = [
-  {
-    id: "1",
-    name: "Sony WH-1000XM5",
-    image: soundcore,
-    url: "https://www.sony.com/headphones/wh-1000xm5",
-    price: 399.99,
-    quantity: 1,
-    variant: "Black",
-  },
-  {
-    id: "2",
-    name: "Bose QuietComfort 45",
-    image: soundcore,
-    url: "https://www.bose.com/quietcomfort-45",
-    price: 329.0,
-    quantity: 2,
-    variant: "White",
-  },
-];
-
 export default function Cart() {
-  const [items, setItems] = useState<CartItem[]>(initialItems);
+  const [items, setItems] = useState<CartProduct[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const subtotal = useMemo(
-    () => items.reduce((sum, item) => sum + item.price * item.quantity, 0),
-    [items]
-  );
-  const total = useMemo(() => subtotal, [subtotal]);
+  // Load cart items from storage
+  useEffect(() => {
+    loadCartItems();
+  }, []);
 
-  const removeItem = (id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+  const loadCartItems = async () => {
+    setLoading(true);
+    const cartItems = await getCartItems();
+    setItems(cartItems);
+    setLoading(false);
   };
 
-  const changeQty = (id: string, delta: number) => {
-    setItems((prev) =>
-      prev
-        .map((i) =>
-          i.id === id ? { ...i, quantity: Math.max(1, i.quantity + delta) } : i
-        )
-        .filter((i) => i.quantity > 0)
-    );
+  // Listen for storage changes to keep cart in sync
+  useEffect(() => {
+    const handleStorageChange = (changes: {
+      [key: string]: chrome.storage.StorageChange;
+    }) => {
+      if (changes.shopping_cart) {
+        setItems(changes.shopping_cart.newValue || []);
+      }
+    };
+
+    chrome.storage.local.onChanged.addListener(handleStorageChange);
+    return () => {
+      chrome.storage.local.onChanged.removeListener(handleStorageChange);
+    };
+  }, []);
+
+  const handleRemoveItem = async (id: string) => {
+    await removeFromCart(id);
+    // Items will update via storage listener
+  };
+
+  const handleChangeQty = async (id: string, delta: number) => {
+    await updateCartQuantity(id, delta);
+    // Items will update via storage listener
   };
 
   return (
@@ -78,98 +198,23 @@ export default function Cart() {
       transition={{ duration: 0.3 }}
       className="flex-1 flex flex-col px-4 gap-3"
     >
-      <div className="space-y-2">
-        <h2 className="text-lg font-semibold text-foreground/80">Your Cart</h2>
-        <Separator className="bg-foreground/5" />
-      </div>
+      {loading ? (
+        <div className="flex items-center justify-center flex-1">
+          <p className="text-sm text-foreground/60">Loading cart...</p>
+        </div>
+      ) : (
+        <>
+          <div className="space-y-2">
+            <h2 className="text-lg font-semibold text-foreground/80">
+              Your Cart
+            </h2>
+            <Separator className="bg-foreground/5" />
+          </div>
 
       <div className="grid grid-cols-1 gap-3">
         <AnimatePresence mode="popLayout">
           {items.map((item) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.2 }}
-              className="p-4 bg-gradient-to-r from-card/60 to-card/40 rounded-2xl border border-foreground/10 hover:border-primary/20 hover:shadow-md backdrop-blur-sm transition-all duration-200"
-            >
-              <div className="flex items-start gap-4">
-                <motion.div whileHover={{ scale: 1.05 }} className="relative">
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-16 h-16 rounded-xl object-cover border border-foreground/10"
-                  />
-                </motion.div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <h4 className="font-semibold text-sm text-foreground truncate">
-                        {item.name}
-                      </h4>
-                      {item.variant ? (
-                        <p className="text-xs text-foreground/60 mt-1">
-                          {item.variant}
-                        </p>
-                      ) : null}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        className="h-8 w-8 p-0 rounded-lg hover:bg-destructive/10"
-                        onClick={() => removeItem(item.id)}
-                        aria-label="Remove"
-                        title="Remove"
-                      >
-                        <Trash2Icon className="w-4 h-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between mt-3">
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        className="h-8 w-8 p-0 rounded-lg"
-                        onClick={() => changeQty(item.id, -1)}
-                        aria-label="Decrease quantity"
-                      >
-                        <MinusIcon className="w-4 h-4" />
-                      </Button>
-                      <span className="min-w-8 text-center text-sm font-medium">
-                        {item.quantity}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        className="h-8 w-8 p-0 rounded-lg"
-                        onClick={() => changeQty(item.id, 1)}
-                        aria-label="Increase quantity"
-                      >
-                        <PlusIcon className="w-4 h-4" />
-                      </Button>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-foreground">
-                        {formatCurrency(item.price * item.quantity)}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        className="h-8 w-8 p-0 rounded-lg"
-                        onClick={() => window.open(item.url, "_blank")}
-                        aria-label="View product"
-                        title="Open in new tab"
-                      >
-                        <ExternalLinkIcon className="w-4 h-4 text-primary" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+            <CartItem key={item.id} item={item} onRemove={handleRemoveItem} />
           ))}
         </AnimatePresence>
 
@@ -183,22 +228,8 @@ export default function Cart() {
           </motion.div>
         )}
       </div>
-
-      <div className="mt-auto space-y-3">
-        <div className="p-4 rounded-2xl border border-foreground/10 bg-card/60 backdrop-blur-sm">
-          <div className="flex items-center justify-between text-sm text-foreground/70">
-            <span>Subtotal</span>
-            <span className="font-medium">{formatCurrency(subtotal)}</span>
-          </div>
-          <Separator className="my-3 bg-foreground/5" />
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold">Total</span>
-            <span className="text-base font-bold">{formatCurrency(total)}</span>
-          </div>
-        </div>
-
-        {/* Checkout action removed for extension storage-only cart */}
-      </div>
+        </>
+      )}
     </motion.div>
   );
 }

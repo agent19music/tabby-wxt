@@ -12,6 +12,8 @@ import {
   ClockIcon,
   TagIcon,
   ArrowUpRight,
+  ShoppingCartIcon,
+  CheckIcon,
 } from "lucide-react";
 import {
   Collapsible,
@@ -22,6 +24,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import soundcore from "@/assets/soundcore.png";
 import { ArrowUpRightIcon, CalendarDotIcon } from "@phosphor-icons/react";
 import { fetchProductsByCategory, type UICategory } from "@/components/functions/db/products_fetch";
+import { addToCart, isInCart } from "@/components/functions/cart_handling";
 
 interface Product {
   id: string;
@@ -57,23 +60,16 @@ export const SearchFilterHeader: React.FC<{
   totalProducts: number;
 }> = ({ searchQuery, setSearchQuery, totalProducts }) => {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-3 w-full"
-    >
-      <div className="flex items-center gap-2 rounded-[100px] w-full">
-        <div className="relative flex-1">
-          <input
-            placeholder="Search past products..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className=" bg-card/50 border-foreground/5  border min-h-12 p-2 px-4  w-full rounded-[100px] backdrop-blur-sm focus:border-primary/50 transition-all duration-200"
-          />
-        </div>
+    <div className="space-y-3 w-full">
+      <div className="relative w-full">
+        <input
+          placeholder="Search past products..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="bg-card border-foreground/5 border h-12 px-4 w-full rounded-2xl backdrop-blur-sm focus:border-foreground/10 transition-all duration-200 outline-none"
+        />
       </div>
-    </motion.div>
+    </div>
   );
 };
 
@@ -93,34 +89,25 @@ export const CategoryItem: React.FC<{
       <Collapsible open={isExpanded} onOpenChange={onToggle}>
         <CollapsibleTrigger asChild>
           <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="flex items-center justify-between p-4 bg-gradient-to-r from-card/80 to-card/60 rounded-2xl border border-foreground/10 hover:border-primary/20 hover:shadow-lg backdrop-blur-sm transition-all duration-300 cursor-pointer group"
+            whileHover={{ scale: 1.005 }}
+            whileTap={{ scale: 0.998 }}
+            className="flex items-center justify-between p-4 bg-card rounded-2xl border border-foreground/5 hover:border-foreground/10 backdrop-blur-sm transition-all duration-200 cursor-pointer"
           >
-            <div className="flex items-center gap-4">
-              <motion.div
-                animate={{ rotate: isExpanded ? 90 : 0 }}
-                transition={{ duration: 0.2 }}
-                className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors"
-              >
-                <ChevronRightIcon className="w-4 h-4 text-primary" />
-              </motion.div>
+            <div className="flex items-center gap-3">
+              <ChevronRightIcon
+                className={`w-4 h-4 text-foreground/70 transition-transform ${
+                  isExpanded ? "rotate-90" : ""
+                }`}
+              />
               <div>
-                <h3 className="font-semibold text-base text-foreground group-hover:text-primary transition-colors">
+                <h3 className="font-semibold text-base text-foreground">
                   {category.name}
                 </h3>
-                <div className="flex items-center gap-2 mt-1">
-                  <TagIcon className="w-3 h-3 text-foreground/50" />
-                  <p className="text-xs text-foreground/60">
-                    {category.count} products
-                  </p>
-                </div>
+                <p className="text-xs text-foreground/60 mt-0.5">
+                  {category.count} products
+                </p>
               </div>
             </div>
-            <motion.div
-              animate={{ scale: isExpanded ? 1.1 : 1 }}
-              className="w-2 h-2 rounded-full bg-primary/30 group-hover:bg-primary/50"
-            />
           </motion.div>
         </CollapsibleTrigger>
 
@@ -179,41 +166,32 @@ export const SubcategoryItem: React.FC<{
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <motion.div whileHover={{ x: 5 }} transition={{ duration: 0.2 }}>
+    <div className="ml-6">
       <Collapsible
         open={isExpanded}
         onOpenChange={() => setIsExpanded(!isExpanded)}
       >
         <CollapsibleTrigger asChild>
           <motion.div
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-            className="ml-6 flex items-center justify-between p-3 bg-gradient-to-r from-card/60 to-card/40 rounded-xl border border-foreground/5 hover:border-primary/10 hover:shadow-md backdrop-blur-sm transition-all duration-200 cursor-pointer group"
+            whileHover={{ scale: 1.005 }}
+            whileTap={{ scale: 0.998 }}
+            className="flex items-center justify-between p-3 bg-card rounded-xl border border-foreground/5 hover:border-foreground/10 backdrop-blur-sm transition-all duration-200 cursor-pointer"
           >
-            <div className="flex items-center gap-3">
-              <motion.div
-                animate={{ rotate: isExpanded ? 90 : 0 }}
-                transition={{ duration: 0.2 }}
-                className="p-1.5 rounded-full bg-primary/5 group-hover:bg-primary/15 transition-colors"
-              >
-                <ChevronRightIcon className="w-3 h-3 text-primary/70" />
-              </motion.div>
+            <div className="flex items-center gap-2">
+              <ChevronRightIcon
+                className={`w-3 h-3 text-foreground/70 transition-transform ${
+                  isExpanded ? "rotate-90" : ""
+                }`}
+              />
               <div>
-                <h4 className="font-medium text-sm text-foreground group-hover:text-primary transition-colors">
+                <h4 className="font-medium text-sm text-foreground">
                   {subcategory.name}
                 </h4>
-                <div className="flex items-center gap-1 mt-0.5">
-                  <TagIcon className="w-2.5 h-2.5 text-foreground/40" />
-                  <p className="text-xs text-foreground/50">
-                    {subcategory.count} products
-                  </p>
-                </div>
+                <p className="text-xs text-foreground/50 mt-0.5">
+                  {subcategory.count} products
+                </p>
               </div>
             </div>
-            <motion.div
-              animate={{ scale: isExpanded ? 1.2 : 1 }}
-              className="w-1.5 h-1.5 rounded-full bg-primary/20 group-hover:bg-primary/40"
-            />
           </motion.div>
         </CollapsibleTrigger>
 
@@ -241,130 +219,193 @@ export const SubcategoryItem: React.FC<{
           )}
         </AnimatePresence>
       </Collapsible>
-    </motion.div>
+    </div>
   );
 };
 
 // Product Item Component
 export const ProductItem: React.FC<{ product: Product }> = ({ product }) => {
   const [isDescOpen, setIsDescOpen] = useState(false);
+  const [inCart, setInCart] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  // Check if product is in cart on mount
+  useEffect(() => {
+    checkCartStatus();
+  }, [product.id]);
+
+  const checkCartStatus = async () => {
+    const status = await isInCart(product.id);
+    setInCart(status);
+  };
+
+  const handleAddToCart = async () => {
+    setAddingToCart(true);
+    const success = await addToCart({
+      id: product.id,
+      name: product.name,
+      image: product.image,
+      url: product.url,
+      price: product.price,
+      discount: product.discount,
+      description: product.description,
+      visitedAt: product.visitedAt,
+      visitCount: product.visitCount,
+    });
+    
+    if (success) {
+      setInCart(true);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
+    }
+    setAddingToCart(false);
+  };
+
   return (
     <motion.div
-      whileHover={{ scale: 1.01 }}
-      className="ml-12 p-4 bg-gradient-to-r from-card/40 to-card/20 border border-foreground/5 hover:border-primary/10 hover:shadow-md rounded-xl backdrop-blur-sm transition-all duration-200 group"
+      whileHover={{ scale: 1.005 }}
+      className="ml-12 p-4 bg-card rounded-2xl border border-foreground/5 hover:border-foreground/10 backdrop-blur-sm transition-all duration-200"
     >
-      <div className="flex items-start gap-4 w-full">
-        <motion.div whileHover={{ scale: 1.1 }} className="relative flex-shrink-0">
+      <div className="flex items-start gap-3 w-full">
+        <div className="relative shrink-0">
           {product.image ? (
             <img
               src={product.image}
               alt={product.name}
-              className="w-16 h-16 rounded-xl object-cover border border-foreground/10 group-hover:border-primary/20 transition-colors"
+              className="w-12 h-12 rounded-lg object-cover"
             />
           ) : (
-            <div className="w-16 h-16 rounded-xl bg-foreground/5 border border-foreground/10 group-hover:border-primary/20 transition-colors flex items-center justify-center">
-              <TagIcon className="w-8 h-8 text-foreground/30" />
+            <div className="w-12 h-12 rounded-lg bg-foreground/5 flex items-center justify-center">
+              <TagIcon className="w-6 h-6 text-foreground/30" />
             </div>
           )}
           {product.visitCount && product.visitCount > 1 && (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center"
-            >
-              <span className="text-[10px] font-bold text-white">{product.visitCount}</span>
-            </motion.div>
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-foreground rounded-full flex items-center justify-center">
+              <span className="text-[9px] font-semibold text-background">{product.visitCount}</span>
+            </div>
           )}
-        </motion.div>
+        </div>
 
         <div className="flex-1 min-w-0 flex flex-col gap-2">
-          {/* Title and Link */}
+          {/* Title and Actions */}
           <div className="flex items-start justify-between gap-2 w-full">
-            <h5 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors line-clamp-2 flex-1 min-w-0">
-              {product.name}
-            </h5>
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className="p-2 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors flex-shrink-0"
-              onClick={() => window.open(product.url, "_blank")}
-            >
-              <ArrowUpRightIcon className="text-primary h-3.5 w-3.5" />
-            </motion.button>
+            <div className="flex-1 min-w-0">
+              <h5 className="font-semibold text-sm text-foreground line-clamp-2">
+                {product.name}
+              </h5>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-sm font-semibold text-foreground">
+                  {product.price}
+                </span>
+                {product.lowestPrice && product.lowestPrice !== product.price && (
+                  <span className="text-xs text-foreground/50 line-through">
+                    {product.lowestPrice}
+                  </span>
+                )}
+              </div>
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="flex gap-1 shrink-0">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                animate={
+                  addingToCart 
+                    ? { scale: [1, 0.9, 1] } 
+                    : showSuccess 
+                    ? { scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }
+                    : {}
+                }
+                transition={{ duration: 0.4 }}
+                className={`p-2 rounded-full transition-all relative ${
+                  inCart
+                    ? "bg-foreground/15"
+                    : "bg-foreground/5 hover:bg-foreground/10"
+                }`}
+                onClick={handleAddToCart}
+                disabled={addingToCart || inCart}
+                title={inCart ? "In Cart" : addingToCart ? "Adding..." : "Add to Cart"}
+              >
+                <AnimatePresence mode="wait">
+                  {showSuccess ? (
+                    <motion.div
+                      key="check"
+                      initial={{ scale: 0, rotate: -180 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      exit={{ scale: 0, rotate: 180 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <CheckIcon className="w-4 h-4" />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="cart"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                    >
+                      <ShoppingCartIcon className="w-4 h-4" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.button>
+              <button
+                className="p-2 bg-foreground/5 hover:bg-foreground/10 rounded-full transition-colors"
+                onClick={() => window.open(product.url, "_blank")}
+                title="Open product page"
+              >
+                <ArrowUpRightIcon className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Metadata Row */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-1">
-              <CalendarDotIcon className="w-3 h-3 text-foreground/50" />
-              <span className="text-xs text-foreground/60">
-                {new Date(product.visitedAt).toLocaleDateString()}
-              </span>
-            </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs text-foreground/60">
+              {new Date(product.visitedAt).toLocaleDateString()}
+            </span>
             {product.discount && (
-              <div className="px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/20">
-                <span className="text-xs font-semibold text-green-600 dark:text-green-400">
-                  {product.discount}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Price Row */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span className="text-base font-bold text-foreground/80 group-hover:text-foreground transition-colors">
-                {product.price}
+              <span className="text-xs text-foreground/70">
+                {product.discount}
               </span>
-              {product.lowestPrice && product.lowestPrice !== product.price && (
-                <span className="text-xs text-foreground/50 line-through">
-                  {product.lowestPrice}
-                </span>
-              )}
-            </div>
+            )}
           </div>
 
           {/* Description Collapsible */}
           {product.description && (
-            <div className="mt-1">
-              <Collapsible open={isDescOpen} onOpenChange={setIsDescOpen}>
-                <CollapsibleTrigger asChild>
-                  <motion.div
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    className="flex items-center justify-between p-2 rounded-lg bg-card/30 border border-foreground/5 hover:border-primary/10 transition-colors cursor-pointer"
-                  >
-                    <span className="text-xs font-medium text-foreground/70 group-hover:text-foreground/90">
-                      {isDescOpen ? "Hide" : "Show"} Description
-                    </span>
-                    <motion.span
-                      animate={{ rotate: isDescOpen ? 180 : 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="p-1 rounded-full bg-primary/5"
-                    >
-                      <ChevronDownIcon className="w-3 h-3 text-primary/70" />
-                    </motion.span>
-                  </motion.div>
-                </CollapsibleTrigger>
+            <Collapsible open={isDescOpen} onOpenChange={setIsDescOpen}>
+              <CollapsibleTrigger asChild>
+                <button className="flex items-center justify-between w-full p-2 rounded-lg bg-foreground/5 hover:bg-foreground/10 transition-colors">
+                  <span className="text-xs font-medium text-foreground/70">
+                    {isDescOpen ? "Hide" : "Show"} Description
+                  </span>
+                  <ChevronDownIcon
+                    className={`w-3 h-3 text-foreground/70 transition-transform ${
+                      isDescOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+              </CollapsibleTrigger>
 
-                <AnimatePresence>
-                  {isDescOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.25 }}
-                    >
-                      <CollapsibleContent className="pt-2">
-                        <p className="text-xs leading-relaxed text-foreground/70 break-words">
-                          {product.description}
-                        </p>
-                      </CollapsibleContent>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </Collapsible>
-            </div>
+              <AnimatePresence>
+                {isDescOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <CollapsibleContent className="pt-2">
+                      <p className="text-xs leading-relaxed text-foreground/70">
+                        {product.description}
+                      </p>
+                    </CollapsibleContent>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </Collapsible>
           )}
         </div>
       </div>
