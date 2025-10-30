@@ -1,6 +1,9 @@
 // Utility functions to fetch and organize products for the UI
 import type { Product, ProductHistory } from "../../types/db";
-import { getAllProducts, getProductHistory } from "./products_site_storage";
+import { getAllProducts as getAllProductsFromStorage, getProductHistory } from "./products_site_storage";
+
+// Re-export for easier imports
+export { getAllProductsFromStorage as getAllProducts };
 
 export interface UIProduct {
   id: string;
@@ -102,7 +105,7 @@ function formatCategoryName(category: string): string {
  */
 export async function fetchProductsByCategory(): Promise<UICategory[]> {
   try {
-    const products = await getAllProducts();
+    const products = await getAllProductsFromStorage();
     
     if (products.length === 0) {
       return [];
@@ -131,7 +134,7 @@ export async function fetchProductsByCategory(): Promise<UICategory[]> {
  */
 export async function fetchRecentProducts(limit: number = 20): Promise<UIProduct[]> {
   try {
-    const products = await getAllProducts();
+    const products = await getAllProductsFromStorage();
     const uiProducts = products.map(convertToUIProduct);
 
     // Sort by last visited
@@ -153,7 +156,7 @@ export async function fetchRecentProducts(limit: number = 20): Promise<UIProduct
  */
 export async function fetchMostViewedProducts(limit: number = 10): Promise<UIProduct[]> {
   try {
-    const products = await getAllProducts();
+    const products = await getAllProductsFromStorage();
     const uiProducts = products.map(convertToUIProduct);
 
     // Sort by visit count
@@ -171,7 +174,7 @@ export async function fetchMostViewedProducts(limit: number = 10): Promise<UIPro
  */
 export async function searchProducts(query: string): Promise<UIProduct[]> {
   try {
-    const products = await getAllProducts();
+    const products = await getAllProductsFromStorage();
     const uiProducts = products.map(convertToUIProduct);
 
     if (!query.trim()) {
@@ -194,6 +197,25 @@ export async function searchProducts(query: string): Promise<UIProduct[]> {
 }
 
 /**
+ * Get product by URL
+ */
+export async function getProductByUrl(url: string): Promise<UIProduct | null> {
+  try {
+    const products = await getAllProductsFromStorage();
+    const product = products.find(p => p.url === url);
+    
+    if (!product) {
+      return null;
+    }
+
+    return convertToUIProduct(product);
+  } catch (error) {
+    console.error("Failed to get product by URL:", error);
+    return null;
+  }
+}
+
+/**
  * Get product statistics
  */
 export async function getProductStats(): Promise<{
@@ -203,7 +225,7 @@ export async function getProductStats(): Promise<{
   mostViewedCategory: string;
 }> {
   try {
-    const products = await getAllProducts();
+    const products = await getAllProductsFromStorage();
 
     const totalVisits = products.reduce((sum, p) => sum + p.visit_count, 0);
 

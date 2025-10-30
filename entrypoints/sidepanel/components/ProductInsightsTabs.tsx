@@ -151,48 +151,60 @@ export const ProductInsightsTabs: React.FC<ProductInsightsTabsProps> = ({
 
       {/* AI Insights Tab */}
       <TabsContent value="insights" className="mt-3">
-        <Accordion type="multiple" className="w-full">
-          {insights.map((insight) => (
-            <AccordionItem
-              key={insight.id}
-              value={insight.id}
-              className="border-none"
-            >
-              <AccordionTrigger className="hover:no-underline py-2">
-                <div className="flex items-center gap-2 text-left">
-                  <div className="w-2 h-2 bg-foreground/50 rounded-full"></div>
-                  <span className="font-semibold text-sm">{insight.title}</span>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pb-3">
-                <div className="bg-card/50 rounded-lg p-3 space-y-2">
-                  <p className="text-sm text-foreground/80">
-                    {insight.content}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 bg-foreground/10 rounded-full flex items-center justify-center">
-                        <span className="text-xs font-medium">1</span>
-                      </div>
-                      <a
-                        href={insight.sourceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-blue-500 hover:text-blue-400 flex items-center gap-1"
-                      >
-                        {insight.source}
-                        <ExternalLinkIcon className="w-3 h-3" />
-                      </a>
-                    </div>
+        {insights.length > 0 ? (
+          <Accordion type="multiple" className="w-full">
+            {insights.map((insight) => (
+              <AccordionItem
+                key={insight.id}
+                value={insight.id}
+                className="border-none"
+              >
+                <AccordionTrigger className="hover:no-underline py-2">
+                  <div className="flex items-center gap-2 text-left">
+                    <div className={`w-2 h-2 rounded-full ${
+                      insight.title === "Pros" 
+                        ? "bg-green-500" 
+                        : insight.title === "Cons" 
+                        ? "bg-red-500" 
+                        : "bg-foreground/50"
+                    }`}></div>
+                    <span className="font-semibold text-sm">{insight.title}</span>
                   </div>
-                  <p className="text-xs text-foreground/50">
-                    AI may make mistakes. Learn more
-                  </p>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+                </AccordionTrigger>
+                <AccordionContent className="pb-3">
+                  <div className="bg-card/50 rounded-lg p-3 space-y-2">
+                    <p className="text-sm text-foreground/80">
+                      {insight.content}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 bg-foreground/10 rounded-full flex items-center justify-center">
+                          <span className="text-xs font-medium">1</span>
+                        </div>
+                        <a
+                          href={insight.sourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-500 hover:text-blue-400 flex items-center gap-1"
+                        >
+                          {insight.source}
+                          <ExternalLinkIcon className="w-3 h-3" />
+                        </a>
+                      </div>
+                    </div>
+                    <p className="text-xs text-foreground/50">
+                      AI may make mistakes. Learn more
+                    </p>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">
+            <p className="text-sm">No AI insights available for this product</p>
+          </div>
+        )}
       </TabsContent>
 
       {/* Previous Products Tab */}
@@ -259,7 +271,7 @@ export const ProductInsightsTabs: React.FC<ProductInsightsTabsProps> = ({
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-6 px-2 text-xs rounded-[10px] hover:bg-foreground/5 transition-colors h-8"
+                            className="h-8 px-2 text-xs rounded-[10px] hover:bg-foreground/5 transition-colors"
                             onClick={() => window.open(product.url, "_blank")}
                           >
                             <ArrowUpRightIcon className="w-3 h-3 mr-1" />
