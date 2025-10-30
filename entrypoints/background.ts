@@ -1,5 +1,5 @@
 import { initializePromptAPI } from "./ai/main_ai";
-// import categorizeSiteByMetadata from "@/components/functions/site_categorizer";
+import { initializeSiteCategorization } from "./background/site_categorization";
 
 export default defineBackground(() => {
   console.log("=== Background script loaded ===");
@@ -11,6 +11,9 @@ export default defineBackground(() => {
       console.log("Chrome Prompt API not available");
     }
   });
+
+  // Initialize site categorization listener
+  initializeSiteCategorization();
 
   chrome.runtime.onInstalled.addListener(async () => {
     console.log("Extension installed/updated");

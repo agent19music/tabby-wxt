@@ -21,8 +21,6 @@ export interface Product {
   first_seen: number; // Timestamp of first visit
   last_seen: number; // Timestamp of most recent visit
   visit_count: number; // How many times user viewed this product
-  lowest_price?: string; // Best price seen
-  lowest_price_url?: string; // URL where lowest price was found
 }
 
 // ProductHistory - Individual product page visits for price tracking

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import ShoppingPanel from "./components/ShoppingPanel";
 import SearchPanel from "./components/SearchPanel";
 import { storage } from "@wxt-dev/storage";
+import { BrowsingHistoryChart } from "./components/BrowsingHistoryChart";
 type Feature = "shopping" | "search" | "stats";
 
 function App() {
@@ -33,7 +34,7 @@ function App() {
       {activeFeature === "search" && <SearchPanel />}
       {activeFeature === "stats" && (
         <div className="p-4">
-          <h1>Stats - Coming Soon</h1>
+          <BrowsingHistoryChart />
         </div>
       )}
     </div>
