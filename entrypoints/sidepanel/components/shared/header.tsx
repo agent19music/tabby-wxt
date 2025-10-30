@@ -8,7 +8,7 @@ export const SidebarHeaderMain = () => {
   const tabs = ["Current Product", "Past Products"];
 
   return (
-    <div className="flex items-center justify-between px-4 py-3  bg-card m-2 rounded-full backdrop-blur-3xl">
+    <div className="flex items-center justify-between px-4 py-3  bg-card m-2 rounded-md backdrop-blur-3xl">
       {/* <h1 className="text-lg font-semibold text-foreground">Shopping</h1> */}
       <img src={logo} className=" h-8" />
 

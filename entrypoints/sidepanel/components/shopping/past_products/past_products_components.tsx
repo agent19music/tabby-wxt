@@ -11,6 +11,7 @@ import {
   ExternalLinkIcon,
   ClockIcon,
   TagIcon,
+  ArrowUpRight,
 } from "lucide-react";
 import {
   Collapsible,
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/collapsible";
 import { motion, AnimatePresence } from "framer-motion";
 import soundcore from "@/assets/soundcore.png";
+import { ArrowUpRightIcon, CalendarDotIcon } from "@phosphor-icons/react";
 
 interface Product {
   id: string;
@@ -28,6 +30,7 @@ interface Product {
   price: string;
   visitedAt: string;
   rating: number;
+  description?: string;
 
   category: string;
   subcategory?: string;
@@ -225,6 +228,7 @@ export const SubcategoryItem: React.FC<{
 
 // Product Item Component
 export const ProductItem: React.FC<{ product: Product }> = ({ product }) => {
+  const [isDescOpen, setIsDescOpen] = useState(false);
   return (
     <motion.div
       whileHover={{ scale: 1.02, x: 5 }}
@@ -243,7 +247,7 @@ export const ProductItem: React.FC<{ product: Product }> = ({ product }) => {
             whileHover={{ scale: 1 }}
             className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center"
           >
-            <StarIcon className="w-2.5 h-2.5 fill-white text-white" />
+            <StarIcon className="w-2.5 h-2.5 fill-white text-background" />
           </motion.div>
         </motion.div>
 
@@ -256,7 +260,8 @@ export const ProductItem: React.FC<{ product: Product }> = ({ product }) => {
 
               <div className="flex items-center gap-3 mt-2">
                 <div className="flex items-center gap-1">
-                  <ClockIcon className="w-3 h-3 text-foreground/50" />
+                  <CalendarDotIcon className="w-3 h-3 text-foreground/50" />
+
                   <span className="text-xs text-foreground/60">
                     {new Date(product.visitedAt).toLocaleDateString()}
                   </span>
@@ -264,7 +269,7 @@ export const ProductItem: React.FC<{ product: Product }> = ({ product }) => {
               </div>
 
               <div className="flex items-center justify-between mt-2">
-                <span className="text-sm font-bold text-green-500 group-hover:text-green-400 transition-colors">
+                <span className="text-sm font-bold text-foreground/50 group-hover:text-foreground/90 transition-colors">
                   {product.price}
                 </span>
 
@@ -274,9 +279,52 @@ export const ProductItem: React.FC<{ product: Product }> = ({ product }) => {
                   className="p-2 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors group-hover:bg-primary/20"
                   onClick={() => window.open(product.url, "_blank")}
                 >
-                  <ExternalLinkIcon className="w-3 h-3 text-primary" />
+                  {/* <ExternalLinkIcon className="w-3 h-3 text-primary" /> */}
+                  <ArrowUpRightIcon className="text-primary h-3 w-3" />
                 </motion.button>
               </div>
+
+              {product.description && (
+                <div className="mt-2">
+                  <Collapsible open={isDescOpen} onOpenChange={setIsDescOpen}>
+                    <CollapsibleTrigger asChild>
+                      <motion.div
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.99 }}
+                        className="flex items-center justify-between p-2 rounded-lg bg-card/30 border border-foreground/5 hover:border-primary/10 transition-colors cursor-pointer"
+                      >
+                        <span className="text-xs font-medium text-foreground/70 group-hover:text-foreground/90">
+                          Description
+                        </span>
+                        <motion.span
+                          animate={{ rotate: isDescOpen ? 180 : 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="p-1 rounded-full bg-primary/5"
+                        >
+                          <ChevronDownIcon className="w-3 h-3 text-primary/70" />
+                        </motion.span>
+                      </motion.div>
+                    </CollapsibleTrigger>
+
+                    <AnimatePresence>
+                      {isDescOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.25 }}
+                        >
+                          <CollapsibleContent className="pt-2">
+                            <p className="text-xs leading-relaxed text-foreground/70">
+                              {product.description}
+                            </p>
+                          </CollapsibleContent>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </Collapsible>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -347,6 +395,8 @@ export const PastProductsMain: React.FC = () => {
               price: "$399.99",
               visitedAt: "2024-01-15",
               rating: 4.8,
+              description:
+                "Premium over-ear headphones with industry-leading noise cancellation, crystal-clear calls, and all-day comfort.",
               category: "Audio & Headphones",
               subcategory: "Wireless Headphones",
             },
@@ -358,6 +408,8 @@ export const PastProductsMain: React.FC = () => {
               price: "$329.00",
               visitedAt: "2024-01-10",
               rating: 4.6,
+              description:
+                "Balanced sound with excellent comfort and reliable ANC for commuting, work, and travel.",
               category: "Audio & Headphones",
               subcategory: "Wireless Headphones",
             },
@@ -369,6 +421,8 @@ export const PastProductsMain: React.FC = () => {
               price: "$249.00",
               visitedAt: "2024-01-05",
               rating: 4.5,
+              description:
+                "Adaptive Transparency and improved ANC in a compact, seamless experience across Apple devices.",
               category: "Audio & Headphones",
               subcategory: "Wireless Headphones",
             },
@@ -386,6 +440,8 @@ export const PastProductsMain: React.FC = () => {
               price: "$499.95",
               visitedAt: "2024-01-08",
               rating: 4.7,
+              description:
+                "Reference-grade open-back headphones delivering natural, detailed sound with wide soundstage.",
               category: "Audio & Headphones",
               subcategory: "Wired Headphones",
             },
@@ -410,6 +466,8 @@ export const PastProductsMain: React.FC = () => {
               price: "$999.00",
               visitedAt: "2024-01-12",
               rating: 4.9,
+              description:
+                "A17 Pro chip, titanium design, and advanced cameras for powerful performance and creativity.",
               category: "Electronics",
               subcategory: "Smartphones",
             },
@@ -427,6 +485,8 @@ export const PastProductsMain: React.FC = () => {
               price: "$1999.00",
               visitedAt: "2024-01-20",
               rating: 4.8,
+              description:
+                "Blazing-fast M3 performance with stunning Liquid Retina display and exceptional battery life.",
               category: "Electronics",
               subcategory: "Laptops",
             },
@@ -451,6 +511,8 @@ export const PastProductsMain: React.FC = () => {
               price: "$99.95",
               visitedAt: "2024-01-18",
               rating: 4.6,
+              description:
+                "7-in-1 multi-cooker for fast and easy pressure cooking, slow cooking, and more.",
               category: "Home & Kitchen",
               subcategory: "Kitchen Appliances",
             },
@@ -468,6 +530,8 @@ export const PastProductsMain: React.FC = () => {
               price: "$49.99",
               visitedAt: "2024-01-25",
               rating: 4.4,
+              description:
+                "Color-changing, app-controlled bulbs with schedules and voice assistant compatibility.",
               category: "Home & Kitchen",
               subcategory: "Home Decor",
             },

@@ -18,7 +18,7 @@ export const ShoppingHeader = (props: Props) => {
   const tabs = ["Current Product", "Past Products"];
 
   return (
-    <div className="flex items-center justify-between px-4 py-3  bg-card m-2 rounded-full backdrop-blur-3xl">
+    <div className="flex items-center justify-between px-4 py-3  border rounded-md m-2  backdrop-blur-3xl">
       {/* <h1 className="text-lg font-semibold text-foreground">Shopping</h1> */}
       <img src={logo} className=" h-8" />
 
@@ -38,12 +38,23 @@ export const ShoppingHeader = (props: Props) => {
 };
 
 export const ShoppingTabs = () => {
-  const tabs = ["Current Product", "Past Products", "Cart"];
+  const tabs = [
+    {
+      label: "Current Product",
+      value: "currentproduct",
+    },
+
+    {
+      label: "Cart",
+      value: "cart",
+    },
+    {
+      label: "Viewed Products",
+      value: "viewedproducts",
+    },
+  ];
   return (
-    <Tabs
-      defaultValue={tabs[0].toLowerCase().replace(" ", "")}
-      className="w-full h-full flex flex-col"
-    >
+    <Tabs defaultValue={tabs[0].value} className="w-full h-full flex flex-col">
       <div className="p-4">
         <div className="flex items-center gap-2 mb-2">
           <h1 className="text-xl font-semibold text-foreground/70">Shopping</h1>
@@ -53,24 +64,25 @@ export const ShoppingTabs = () => {
           {tabs.map((tab, index) => (
             <TabsTrigger
               key={index}
-              value={tab.toLowerCase().replace(" ", "")}
+              value={tab.value}
               className="flex-1 shadow-none py-2 text-sm font-medium text-muted-foreground rounded-full 
             data-[state=active]:bg-foreground/5 
             "
             >
-              {tab}
+              {tab.label}
             </TabsTrigger>
           ))}
         </TabsList>
       </div>
-      <TabsContent value="currentproduct" className="flex-1 flex flex-col">
+      <TabsContent value={tabs[0].value} className="flex-1 flex flex-col">
         <CurrentProduct />
       </TabsContent>
-      <TabsContent value="pastproducts" className="flex-1 flex flex-col">
-        <PastProducts />
-      </TabsContent>
-      <TabsContent value="cart" className="flex-1 flex flex-col">
+
+      <TabsContent value={tabs[1].value} className="flex-1 flex flex-col">
         <Cart />
+      </TabsContent>
+      <TabsContent value={tabs[2].value} className="flex-1 flex flex-col">
+        <PastProducts />
       </TabsContent>
     </Tabs>
   );
