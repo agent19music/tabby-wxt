@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Tabby AI Processor</title>
+  </head>
+  <body>
+    <script type="module">
+      console.log('[Offscreen] AI processor ready');
+
+      chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+        console.log('[Offscreen] Received AI request:', message?.type);
+        handleAIRequest(message).then(sendResponse);
+        return true;
+      });
+
+      async function handleAIRequest(request) {
+        try {
+          switch (request?.type) {
+            case 'categorize-site':
+              return await categorizeSite(request.data);
+            case 'analyze-page':
+              return await analyzePage(request.data);
+            case 'parse-product':
+              return await parseProduct(request.data);
+            case 'check-similarity':
+              return await checkProductSimilarity(request.data);
+            case 'analyze-review':
+              return await analyzeReview(request.data);
+            case 'ai-search-session':
+              return await handleAISearchSession(request.data);
+            case 'ai-product-summary':
+              return await generateAIProductSummary(request.data);
+            default:
+              throw new Error('Unknown request type');
+          }
+        } catch (error) {
+          console.error('[Offscreen] AI processing error:', error);
+          return { error: error instanceof Error ? error.message : String(error) };
+        }
+      }
+
+      async function categorizeSite(data) {
+        const prompt = `Based on this website metadata, assign ONE primary category tag.
+Choose from: Tech, Shopping, News, Social, Entertainment, Education, Finance, Health, Travel, Food, Other
+
+Metadata:
+- Title: ${data.title}
+- Description: ${data.description || 'N/A'}
+- Keywords: ${data.keywords || 'N/A'}
+
+Return ONLY the category name, nothing else.`;
+
+        const result = await window.ai?.prompt?.(prompt);
+        const category = result?.trim?.() || 'Other';
+        console.log('[Offscreen] Site category:', category);
+        return { category };
+      }
+
+      async function analyzePage(data) {
+        const truncatedText = (data.text || '').slice(0, 3000);
+
+        const prompt = `Analyze this webpage content and return a JSON object with this EXACT structure:
+{
+  "isProductPage": boolean,
+  "tags": string[], // 5-10 descriptive keywords
+  "summary": string // one-sentence summary (max 150 chars)
+}
+
+URL: ${data.url}
+
+Content:
+${truncatedText}
+
+Return ONLY the JSON object, no markdown, no explanation.`;
+
+        const result = await window.ai?.prompt?.(prompt);
+        console.log('[Offscreen] Page analysis raw:', result);
+
+        const jsonMatch = result?.match?.(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('No JSON found in AI response');
+
+        return JSON.parse(jsonMatch[0]);
+      }
+
+      async function parseProduct(data) {
+        const truncatedText = (data.text || '').slice(0, 4000);
+        const truncatedHtml = (data.html || '').slice(0, 6000);
+
+        const prompt = `Extract product details from this webpage in EXACT JSON format:
+{
+  "productTitle": string,
+  "brand": string,
+  "categories": [string, string, string],
+  "price": number,
+  "currency": string,
+  "condition": "new" | "refurbished" | "unknown",
+  "discountPercent": number | null,
+  "primaryImage": string,
+  "imageGallery": string[],
+  "rating": number,
+  "reviewCount": number,
+  "availability": "in-stock" | "out-of-stock" | "pre-order" | "unknown",
+  "specifications": Record<string, string>
+}
+
+URL: ${data.url}
+
+HTML Snippet:
+${truncatedHtml}
+
+Text Content:
+${truncatedText}
+
+Return ONLY the JSON object.`;
+
+        const result = await window.ai?.prompt?.(prompt);
+        console.log('[Offscreen] Product parse raw:', result);
+
+        const jsonMatch = result?.match?.(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('No JSON found in product parse');
+
+        const parsed = JSON.parse(jsonMatch[0]);
+
+        parsed.categoryString = Array.isArray(parsed.categories)
+          ? parsed.categories.filter(Boolean).join('.')
+          : '';
+
+        if (!parsed.brand && data.metadata?.brand) {
+          parsed.brand = data.metadata.brand;
+        }
+
+        if (!Array.isArray(parsed.imageGallery)) {
+          parsed.imageGallery = parsed.imageGallery ? [parsed.imageGallery] : [];
+        }
+
+        return parsed;
+      }
+
+      async function checkProductSimilarity(data) {
+        if (!Array.isArray(data.existingTitles) || data.existingTitles.length === 0) {
+          return { matchedTitle: null };
+        }
+
+        const prompt = `You are a product matching system. Does the "New Product" below refer to the SAME PHYSICAL ITEM as any in the "Existing Products" list?
+
+Consider:
+- Same brand and model (ignore color/size variations)
+- "Sony WH-1000XM5" matches "Sony WH1000XM5 Headphones - Black"
+- "MacBook Pro 16 M3" matches "Apple MacBook Pro 16-inch M3 Pro"
+
+If YES, return the EXACT string from the Existing Products list that it matches.
+If NO, return exactly: None
+
+New Product:
+"${data.newTitle}"
+
+Existing Products:
+${data.existingTitles.map((title, index) => `${index + 1}. "${title}"`).join('\n')}
+
+Return ONLY the matched string or "None".`;
+
+        const result = await window.ai?.prompt?.(prompt);
+        const match = result?.trim?.() || 'None';
+        console.log('[Offscreen] Similarity check:', match);
+
+        return { matchedTitle: match === 'None' ? null : match };
+      }
+
+      async function analyzeReview(data) {
+        const truncatedText = (data.text || '').slice(0, 3000);
+
+        const prompt = `Analyze this product review and return JSON:
+{
+  "sentiment": "positive" | "negative" | "neutral" | "mixed",
+  "reviewerName": string | null,
+  "productName": string,
+  "keyPoints": string[]
+}
+
+URL: ${data.url}
+
+Content:
+${truncatedText}
+
+Return ONLY the JSON object.`;
+
+        const result = await window.ai?.prompt?.(prompt);
+        console.log('[Offscreen] Review analysis raw:', result);
+
+        const jsonMatch = result?.match?.(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('No JSON in review analysis');
+
+        return JSON.parse(jsonMatch[0]);
+      }
+
+      async function generateAIProductSummary(data) {
+        const result = await window.ai?.prompt?.(data.prompt);
+        const jsonMatch = result?.match?.(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('No JSON in summary response');
+        console.log('[Offscreen] Product summary raw:', result);
+        return JSON.parse(jsonMatch[0]);
+      }
+
+      async function handleAISearchSession(data) {
+        console.log('[Offscreen] Creating AI search session');
+
+        try {
+          if (!window.ai?.createTextSession) {
+            throw new Error('createTextSession not available');
+          }
+
+          const session = await window.ai.createTextSession();
+          const systemPrompt = `You are a browsing history search assistant. The user will describe something they saw while browsing.
+Your job is to find the EXACT URL that matches their description from their recent history.
+
+Here is their recent browsing history (newest first):
+${data.searchContext}
+
+Return your response as JSON with this EXACT structure:
+{
+  "matchIndex": number,
+  "confidence": "high" | "medium" | "low",
+  "reasoning": string
+}
+
+Consider:
+- Site domains and descriptions
+- Keywords and tags
+- Time context (e.g., "last week")
+- Visual descriptions (colors, themes)
+- Content type (e.g., "SaaS", "portfolio")`;
+
+          await session.prompt(systemPrompt);
+          const result = await session.prompt(
+            `User is looking for: "${data.query}"
+
+Find the matching entry and return the JSON.`
+          );
+
+          console.log('[Offscreen] AI search session result:', result);
+
+          const jsonMatch = result?.match?.(/\{[\s\S]*\}/);
+          if (!jsonMatch) {
+            return { success: false, message: 'Could not parse AI response' };
+          }
+
+          const parsed = JSON.parse(jsonMatch[0]);
+          const index = parsed.matchIndex ?? -1;
+
+          if (index >= 0 && index < data.logs.length) {
+            const matchedLog = data.logs[index];
+            return {
+              success: true,
+              url: matchedLog.url,
+              title: matchedLog.summary,
+              domain: matchedLog.siteDomain,
+              confidence: parsed.confidence,
+              reasoning: parsed.reasoning,
+              timestamp: matchedLog.timestamp,
+            };
+          }
+
+          return {
+            success: false,
+            message: 'No matching page found in your recent history',
+            confidence: parsed.confidence,
+            reasoning: parsed.reasoning,
+          };
+        } catch (error) {
+          console.error('[Offscreen] AI search session error:', error);
+          return { error: error instanceof Error ? error.message : String(error) };
+        }
+      }
+    </script>
+  </body>
+</html>

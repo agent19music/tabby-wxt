@@ -1,13 +1,5 @@
-import React, { useState } from "react";
-import {
-  ChevronDownIcon,
-  ExternalLinkIcon,
-  StarIcon,
-  CalendarIcon,
-  LightbulbIcon,
-  HistoryIcon,
-  ChevronUpIcon,
-} from "lucide-react";
+import { useMemo, useState } from "react";
+import placeholderImage from "@/assets/soundcore.png";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -25,115 +17,161 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowUpRightIcon,
-  CloudSlashIcon,
-  RobotIcon,
-} from "@phosphor-icons/react";
+  CalendarIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  ExternalLinkIcon,
+  HistoryIcon,
+  StarIcon,
+} from "lucide-react";
+import { CloudSlashIcon, RobotIcon } from "@phosphor-icons/react";
+import type { IndexedProduct, PriceSnapshot, ProductListing } from "@/types";
 
-interface AIInsight {
+type DateRange = "day" | "week" | "month" | "all";
+
+interface InsightItem {
   id: string;
-  type: "recommendation" | "tip" | "comparison";
   title: string;
   content: string;
-  source: string;
-  sourceUrl: string;
+  source?: string;
+  sourceUrl?: string;
 }
 
-interface SearchHistoryProduct {
+interface RelatedProduct {
   id: string;
   name: string;
   image: string;
-  url: string;
-  price?: string;
-  visitedAt: string;
+  url?: string;
+  priceLabel?: string;
+  lastInteraction: number;
   category: string;
-  aiInsights?: {
-    pros: string[];
-    cons: string[];
-    bestFor: string;
-    comparison: string;
-  };
-  features?: string[];
   rating?: number;
+  summary?: string;
+  recommendation?: string;
+  features: string[];
 }
 
 interface ProductInsightsTabsProps {
-  insights: AIInsight[];
-  searchHistory: SearchHistoryProduct[];
-  currentProduct: {
-    name: string;
-    url: string;
-    category: string;
-  };
+  currentProduct: IndexedProduct | null;
+  products: IndexedProduct[];
 }
 
-export const ProductInsightsTabs: React.FC<ProductInsightsTabsProps> = ({
-  insights,
-  searchHistory,
+export function ProductInsightsTabs({
   currentProduct,
-}) => {
-  const [dateRange, setDateRange] = useState<string>("all");
+  products,
+}: ProductInsightsTabsProps) {
+  const [dateRange, setDateRange] = useState<DateRange>("all");
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
 
-  const toggleCardExpansion = (productId: string) => {
-    setExpandedCards((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(productId)) {
-        newSet.delete(productId);
-      } else {
-        newSet.add(productId);
-      }
-      return newSet;
-    });
-  };
+  const insights = useMemo<InsightItem[]>(() => {
+    if (!currentProduct) return [];
 
-  const filterProductsByDateRange = (
-    products: SearchHistoryProduct[],
-    range: string
-  ) => {
-    const now = new Date();
-    const filterDate = new Date();
+    const items: InsightItem[] = [];
 
-    switch (range) {
-      case "day":
-        filterDate.setDate(now.getDate() - 1);
-        break;
-      case "week":
-        filterDate.setDate(now.getDate() - 7);
-        break;
-      case "month":
-        filterDate.setMonth(now.getMonth() - 1);
-        break;
-      case "all":
-        return products;
-      default:
-        filterDate.setDate(now.getDate() - 7);
+    if (currentProduct.aiSummary) {
+      items.push({
+        id: `${currentProduct.id}-summary`,
+        title: "AI summary",
+        content: currentProduct.aiSummary,
+        source: "Tabby AI",
+        sourceUrl:
+          currentProduct.lowestPrice?.url ||
+          currentProduct.listings[0]?.url ||
+          undefined,
+      });
     }
 
-    return products.filter(
-      (product) => new Date(product.visitedAt) >= filterDate
-    );
-  };
+    if (currentProduct.aiRecommendation) {
+      items.push({
+        id: `${currentProduct.id}-recommendation`,
+        title: "Recommendation",
+        content: currentProduct.aiRecommendation,
+        source: "Tabby AI",
+        sourceUrl:
+          currentProduct.lowestPrice?.url ||
+          currentProduct.listings[0]?.url ||
+          undefined,
+      });
+    }
 
-  const relatedProducts = filterProductsByDateRange(
-    searchHistory.filter(
-      (product) =>
-        product.category === currentProduct.category &&
-        product.name !== currentProduct.name
-    ),
-    dateRange
-  ).slice(0, 8);
+    return items;
+  }, [currentProduct]);
+
+  const historyProducts = useMemo<RelatedProduct[]>(() => {
+    return products.map((product) => {
+      const image = getPrimaryImage(product) ?? placeholderImage;
+      const listing = getPrimaryListing(product);
+      const priceLabel = formatPriceSnapshot(
+        product.lowestPrice ?? listing
+      );
+
+      return {
+        id: product.id,
+        name: product.mainTitle,
+        image,
+        url: product.lowestPrice?.url ?? listing?.url,
+        priceLabel: priceLabel ?? undefined,
+        lastInteraction:
+          product.lastViewed ?? product.lastUpdated ?? product.firstSeen ?? Date.now(),
+        category: product.category,
+        rating:
+          typeof product.averageRating === "number"
+            ? product.averageRating
+            : listing?.rating,
+        summary: product.aiSummary,
+        recommendation: product.aiRecommendation,
+        features: extractFeatureChips(product),
+      };
+    });
+  }, [products]);
+
+  const relatedProducts = useMemo(() => {
+    const base = currentProduct
+      ? historyProducts.filter(
+          (product) =>
+            product.id !== currentProduct.id &&
+            product.category === currentProduct.category
+        )
+      : historyProducts;
+
+    const sorted = [...base].sort(
+      (a, b) => b.lastInteraction - a.lastInteraction
+    );
+
+    return filterProductsByDateRange(sorted, dateRange);
+  }, [historyProducts, currentProduct, dateRange]);
+
   const tabs = [
     {
       label: "AI Insights",
-      icon: <RobotIcon size={32} className="w-3 h-3 mr-1" />,
+      icon: <RobotIcon size={16} className="mr-1" />,
       value: "insights",
     },
     {
       label: "Previous Products",
-      icon: <CloudSlashIcon size={32} className="w-3 h-3 mr-1" />,
+      icon: <CloudSlashIcon size={16} className="mr-1" />,
       value: "previous",
     },
+  ] as const;
+
+  const dateOptions: Array<{ value: DateRange; label: string }> = [
+    { value: "all", label: "All time" },
+    { value: "month", label: "Past month" },
+    { value: "week", label: "Past week" },
+    { value: "day", label: "Past day" },
   ];
+
+  const toggleCardExpansion = (productId: string) => {
+    setExpandedCards((prev) => {
+      const updated = new Set(prev);
+      if (updated.has(productId)) {
+        updated.delete(productId);
+      } else {
+        updated.add(productId);
+      }
+      return updated;
+    });
+  };
 
   return (
     <Tabs defaultValue="insights" className="w-full">
@@ -142,214 +180,207 @@ export const ProductInsightsTabs: React.FC<ProductInsightsTabsProps> = ({
           <TabsTrigger
             key={tab.value}
             value={tab.value}
-            className="text-xs data-[state=active]:bg-foreground/5 rounded-full"
+            className="text-xs data-[state=active]:bg-foreground/5 rounded-full flex items-center justify-center"
           >
-            {tab.icon} {tab.label}
+            {tab.icon}
+            {tab.label}
           </TabsTrigger>
         ))}
       </TabsList>
 
-      {/* AI Insights Tab */}
       <TabsContent value="insights" className="mt-3">
-        <Accordion type="multiple" className="w-full">
-          {insights.map((insight) => (
-            <AccordionItem
-              key={insight.id}
-              value={insight.id}
-              className="border-none"
-            >
-              <AccordionTrigger className="hover:no-underline py-2">
-                <div className="flex items-center gap-2 text-left">
-                  <div className="w-2 h-2 bg-foreground/50 rounded-full"></div>
-                  <span className="font-semibold text-sm">{insight.title}</span>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pb-3">
-                <div className="bg-card/50 rounded-lg p-3 space-y-2">
-                  <p className="text-sm text-foreground/80">
-                    {insight.content}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 bg-foreground/10 rounded-full flex items-center justify-center">
-                        <span className="text-xs font-medium">1</span>
-                      </div>
-                      <a
-                        href={insight.sourceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-blue-500 hover:text-blue-400 flex items-center gap-1"
-                      >
-                        {insight.source}
-                        <ExternalLinkIcon className="w-3 h-3" />
-                      </a>
-                    </div>
+        {insights.length > 0 ? (
+          <Accordion type="multiple" className="w-full">
+            {insights.map((insight) => (
+              <AccordionItem
+                key={insight.id}
+                value={insight.id}
+                className="border-none"
+              >
+                <AccordionTrigger className="hover:no-underline py-2">
+                  <div className="flex items-center gap-2 text-left">
+                    <div className="w-2 h-2 bg-foreground/50 rounded-full" />
+                    <span className="font-semibold text-sm">
+                      {insight.title}
+                    </span>
                   </div>
-                  <p className="text-xs text-foreground/50">
-                    AI may make mistakes. Learn more
-                  </p>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+                </AccordionTrigger>
+                <AccordionContent className="pb-3">
+                  <div className="bg-card/50 rounded-lg p-3 space-y-2">
+                    <p className="text-sm text-foreground/80">
+                      {insight.content}
+                    </p>
+
+                    {insight.source && insight.sourceUrl && (
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-5 h-5 bg-foreground/10 rounded-full flex items-center justify-center">
+                            <span className="text-xs font-medium">AI</span>
+                          </div>
+                          <a
+                            href={insight.sourceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-500 hover:text-blue-400 flex items-center gap-1"
+                          >
+                            {insight.source}
+                            <ExternalLinkIcon className="w-3 h-3" />
+                          </a>
+                        </div>
+                      </div>
+                    )}
+
+                    <p className="text-xs text-foreground/50">
+                      AI may make mistakes. Validate important details.
+                    </p>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        ) : (
+          <div className="text-center py-6 border border-dashed border-foreground/10 rounded-xl">
+            <RobotIcon size={20} className="mx-auto mb-2 text-foreground/40" />
+            <p className="text-sm text-foreground/60">No AI insights yet.</p>
+            <p className="text-xs text-foreground/40 mt-1">
+              Browse the product for a bit longer to give Tabby more context.
+            </p>
+          </div>
+        )}
       </TabsContent>
 
-      {/* Previous Products Tab */}
-      <TabsContent value="previous" className="mt-3">
+      <TabsContent value="previous" className="mt-3 space-y-3">
         {relatedProducts.length > 0 ? (
-          <div className="space-y-3">
-            {/* Previous Products */}
+          <>
+            <div className="flex justify-end">
+              <Select
+                value={dateRange}
+                onValueChange={(value) => setDateRange(value as DateRange)}
+              >
+                <SelectTrigger className="h-8 w-[140px] text-xs">
+                  <SelectValue placeholder="Date range" />
+                </SelectTrigger>
+                <SelectContent>
+                  {dateOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-3">
               {relatedProducts.map((product) => {
                 const isExpanded = expandedCards.has(product.id);
+
                 return (
                   <div
                     key={product.id}
                     className="bg-card/50 rounded-lg border border-foreground/5 hover:bg-card/70 transition-colors"
                   >
-                    {/* Collapsible Header */}
-                    <div
-                      className="p-4 cursor-pointer"
+                    <button
+                      type="button"
+                      className="w-full p-4 flex items-center gap-3 text-left"
                       onClick={() => toggleCardExpansion(product.id)}
                     >
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-10 h-10 rounded-lg object-cover"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h4 className="font-medium text-sm text-wrap">
-                                {product.name}
-                              </h4>
-                              <div className="flex items-center gap-2 mt-1">
-                                {product.price && (
-                                  <p className="text-sm font-medium text-muted-foreground">
-                                    {product.price}
-                                  </p>
-                                )}
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-10 h-10 rounded-lg object-cover"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <h4 className="font-medium text-sm truncate">
+                              {product.name}
+                            </h4>
+                            <div className="flex items-center gap-2 mt-1 text-xs text-foreground/60">
+                              {product.priceLabel && (
+                                <span className="font-medium text-foreground/70">
+                                  {product.priceLabel}
+                                </span>
+                              )}
+                              <div className="flex items-center gap-1">
+                                <CalendarIcon className="w-3 h-3" />
+                                <span>
+                                  {formatRelativeTime(product.lastInteraction)}
+                                </span>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="  hover:bg-foreground/5 transition-colors h-8 w-8 rounded-full"
-                              >
-                                {isExpanded ? (
-                                  <ChevronUpIcon className="w-3 h-3" />
-                                ) : (
-                                  <ChevronDownIcon className="w-3 h-3" />
-                                )}
-                              </Button>
-                            </div>
                           </div>
+                          <ChevronDownIcon
+                            className={`w-4 h-4 transition-transform ${
+                              isExpanded ? "rotate-180" : "rotate-0"
+                            }`}
+                          />
                         </div>
                       </div>
-                    </div>
+                    </button>
 
-                    {/* Collapsible Content */}
                     {isExpanded && (
                       <div className="px-4 pb-4 space-y-3">
-                        {/* Quick Action */}
                         <div className="flex justify-end">
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-6 px-2 text-xs rounded-[10px] hover:bg-foreground/5 transition-colors h-8"
-                            onClick={() => window.open(product.url, "_blank")}
+                            className="h-6 px-2 text-xs rounded-[10px] hover:bg-foreground/5 transition-colors"
+                            onClick={() => {
+                              if (product.url) {
+                                window.open(
+                                  product.url,
+                                  "_blank",
+                                  "noopener,noreferrer"
+                                );
+                              }
+                            }}
+                            disabled={!product.url}
                           >
                             <ArrowUpRightIcon className="w-3 h-3 mr-1" />
+                            View
                           </Button>
                         </div>
 
-                        {/* AI Insights */}
-                        {product.aiInsights && (
-                          <div className="space-y-3 pt-2 border-t border-foreground/5">
-                            {/* AI Summary */}
-                            <div className="space-y-2">
-                              <p className="text-xs text-foreground/70 leading-relaxed">
+                        {(product.summary || product.recommendation) && (
+                          <div className="space-y-2 text-xs text-foreground/70 leading-relaxed border-t border-foreground/5 pt-3">
+                            {product.summary && (
+                              <p>
                                 <span className="font-medium text-foreground/80">
-                                  Best for:
+                                  Summary:
                                 </span>{" "}
-                                {product.aiInsights.bestFor}
+                                {product.summary}
                               </p>
-                              <p className="text-xs text-foreground/70 leading-relaxed">
+                            )}
+                            {product.recommendation && (
+                              <p>
                                 <span className="font-medium text-foreground/80">
-                                  vs Current:
+                                  Recommendation:
                                 </span>{" "}
-                                {product.aiInsights.comparison}
+                                {product.recommendation}
                               </p>
-                            </div>
+                            )}
+                          </div>
+                        )}
 
-                            {/* Quick Pros/Cons */}
-                            <div className="space-y-1">
-                              <div className="flex items-start gap-2">
-                                <span className="text-xs font-medium text-green-600 min-w-0">
-                                  ✓
-                                </span>
-                                <div className="text-xs text-foreground/70 leading-relaxed">
-                                  {product.aiInsights.pros
-                                    .slice(0, 2)
-                                    .join(", ")}
-                                </div>
-                              </div>
-                              <div className="flex items-start gap-2">
-                                <span className="text-xs font-medium text-red-500 min-w-0">
-                                  ✗
-                                </span>
-                                <div className="text-xs text-foreground/70 leading-relaxed">
-                                  {product.aiInsights.cons
-                                    .slice(0, 2)
-                                    .join(", ")}
-                                </div>
-                              </div>
-                            </div>
+                        {product.rating && (
+                          <div className="flex items-center gap-2 text-xs text-foreground/60">
+                            <StarIcon className="w-3 h-3" />
+                            <span>
+                              {product.rating.toFixed(1)} average rating
+                            </span>
+                          </div>
+                        )}
 
-                            {/* Features */}
-                            {product.features &&
-                              product.features.length > 0 && (
-                                <div className="flex items-center gap-1 flex-wrap">
-                                  <span className="text-xs text-foreground/50">
-                                    Features:
-                                  </span>
-                                  {product.features
-                                    .slice(0, 4)
-                                    .map((feature, index) => (
-                                      <span
-                                        key={index}
-                                        className="text-xs bg-foreground/5 text-foreground/60 px-2 py-0.5 rounded-md"
-                                      >
-                                        {feature}
-                                      </span>
-                                    ))}
-                                  {product.features.length > 4 && (
-                                    <span className="text-xs text-foreground/50">
-                                      +{product.features.length - 4}
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-
-                            {/* AI Expand Button */}
-                            <div className="flex justify-center pt-1">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-6 px-2 text-xs text-foreground/60 hover:text-foreground/80"
-                                onClick={() => {
-                                  console.log(
-                                    `Expand AI insights for ${product.name}`
-                                  );
-                                }}
+                        {product.features.length > 0 && (
+                          <div className="flex items-center gap-1 flex-wrap pt-1">
+                            {product.features.slice(0, 6).map((feature) => (
+                              <span
+                                key={feature}
+                                className="text-xs bg-foreground/5 text-foreground/60 px-2 py-0.5 rounded-md"
                               >
-                                <ChevronDownIcon className="w-3 h-3 mr-1" />
-                                Get more AI insights
-                              </Button>
-                            </div>
+                                {feature}
+                              </span>
+                            ))}
                           </div>
                         )}
                       </div>
@@ -358,19 +389,111 @@ export const ProductInsightsTabs: React.FC<ProductInsightsTabsProps> = ({
                 );
               })}
             </div>
-          </div>
+          </>
         ) : (
-          <div className="text-center py-8">
+          <div className="text-center py-8 border border-dashed border-foreground/10 rounded-xl">
             <HistoryIcon className="w-8 h-8 text-foreground/30 mx-auto mb-2" />
             <p className="text-sm text-foreground/60">
-              No previous products found for this category
+              No related products yet.
             </p>
             <p className="text-xs text-foreground/40 mt-1">
-              Try browsing more products to see comparisons
+              Browse more items in this category to see comparisons.
             </p>
           </div>
         )}
       </TabsContent>
     </Tabs>
   );
-};
+}
+
+function filterProductsByDateRange(products: RelatedProduct[], range: DateRange) {
+  if (range === "all") {
+    return products.slice(0, 8);
+  }
+
+  const now = Date.now();
+  let threshold = now;
+
+  if (range === "day") {
+    threshold -= 24 * 60 * 60 * 1000;
+  } else if (range === "week") {
+    threshold -= 7 * 24 * 60 * 60 * 1000;
+  } else if (range === "month") {
+    threshold -= 30 * 24 * 60 * 60 * 1000;
+  }
+
+  return products
+    .filter((product) => product.lastInteraction >= threshold)
+    .slice(0, 8);
+}
+
+function getPrimaryImage(product: IndexedProduct) {
+  if (product.primaryImage) return product.primaryImage;
+  if (Array.isArray(product.imageGallery) && product.imageGallery.length > 0) {
+    return product.imageGallery[0] || undefined;
+  }
+  const listingWithImage = product.listings.find(
+    (listing) => Boolean(listing.imageUrl || listing.thumbnailUrl)
+  );
+  return listingWithImage?.imageUrl || listingWithImage?.thumbnailUrl || undefined;
+}
+
+function getPrimaryListing(product: IndexedProduct): ProductListing | undefined {
+  if (product.lowestPrice?.url) {
+    return product.listings.find((listing) => listing.url === product.lowestPrice?.url);
+  }
+  return product.listings.find((listing) => typeof listing.price === "number");
+}
+
+function formatPriceSnapshot(
+  snapshot?: PriceSnapshot | ProductListing | null
+): string | null {
+  if (!snapshot) return null;
+  const price = (snapshot as PriceSnapshot).price ?? (snapshot as ProductListing).price;
+  const currency = (snapshot as PriceSnapshot).currency ?? (snapshot as ProductListing).currency;
+  if (typeof price !== "number") return null;
+
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: currency || "USD",
+      maximumFractionDigits: 2,
+    }).format(price);
+  } catch {
+    return currency ? `${currency} ${price.toFixed(2)}` : price.toFixed(2);
+  }
+}
+
+function extractFeatureChips(product: IndexedProduct): string[] {
+  const chips: string[] = [];
+
+  if (product.brand) {
+    chips.push(product.brand);
+  }
+
+  if (product.specifications) {
+    for (const [key, value] of Object.entries(product.specifications)) {
+      if (chips.length >= 6) break;
+      if (typeof value === "string" && value.trim().length > 0 && value.length <= 32) {
+        chips.push(value);
+      } else if (key.trim().length > 0) {
+        chips.push(key);
+      }
+    }
+  }
+
+  return chips;
+}
+
+function formatRelativeTime(timestamp: number) {
+  const diff = Date.now() - timestamp;
+  const seconds = Math.max(0, Math.floor(diff / 1000));
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) return `${days}d ago`;
+  if (hours > 0) return `${hours}h ago`;
+  if (minutes > 0) return `${minutes}m ago`;
+  return "just now";
+}

@@ -7,5 +7,14 @@
     "paths": {
       "@/*": ["./*"]
     }
-  }
+  },
+  "include": [
+    "entrypoints",
+    "components",
+    "utils",
+    "hooks",
+    "lib",
+    "app",
+    "types"
+  ]
 }

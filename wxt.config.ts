@@ -8,7 +8,7 @@ export default defineConfig({
     plugins: [tailwindcss()],
   }),
   manifest: {
-    permissions: ["sidePanel", "storage", "tabs", "activeTab", "scripting"],
+    permissions: ["sidePanel", "storage", "tabs", "activeTab", "scripting","history","offscreen","webNavigation"],
     host_permissions: ["<all_urls>"],
   },
 });

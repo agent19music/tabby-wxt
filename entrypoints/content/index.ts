@@ -1,4 +1,22 @@
-import { type PageData } from "@/components/functions/content_scanner";
+import {
+  type PageData,
+  scanPageContent,
+} from "@/components/functions/content_scanner";
+
+declare const defineContentScript: <T>(config: T) => T;
+declare const chrome: {
+  runtime: {
+    onMessage: {
+      addListener(
+        listener: (
+          message: Record<string, unknown>,
+          sender: unknown,
+          sendResponse: (response?: unknown) => void
+        ) => void
+      ): void;
+    };
+  };
+};
 
 export default defineContentScript({
   matches: ["<all_urls>"],
@@ -9,6 +27,19 @@ export default defineContentScript({
     (window as any).tabbyContentScript = true;
 
     console.log("Tabby content script loaded on:", window.location.href);
+
+    let cachedPageData: PageData | null = null;
+    let cachedAt = 0;
+
+    const getPageSnapshot = (force = false): PageData => {
+      const now = Date.now();
+      if (!force && cachedPageData && now - cachedAt < 5_000) {
+        return cachedPageData;
+      }
+      cachedPageData = scanPageContent();
+      cachedAt = now;
+      return cachedPageData;
+    };
 
     // Simple test function
     const testFunction = () => {
@@ -36,36 +67,44 @@ export default defineContentScript({
 
       if (request.action === "getPageContent") {
         try {
-          // Import the scanner function dynamically
-          import("@/components/functions/content_scanner")
-            .then(({ scanPageContent }) => {
-              const pageData = scanPageContent();
-              console.log("Sending page content:", {
-                title: pageData.title,
-                url: pageData.url,
-                contentLength: pageData.content.length,
-                headingsCount: pageData.headings.length,
-                imagesCount: pageData.images.length,
-              });
+          const pageData = getPageSnapshot(request.force === true);
+          console.log("Sending page content:", {
+            title: pageData.title,
+            url: pageData.url,
+            contentLength: pageData.content.length,
+            headingsCount: pageData.headings.length,
+            imagesCount: pageData.images.length,
+            hasProductData: Boolean(pageData.productData),
+          });
 
-              sendResponse({
-                success: true,
-                data: {
-                  title: pageData.title,
-                  url: pageData.url,
-                  text: pageData.content,
-                  headings: pageData.headings,
-                  images: pageData.images,
-                  timestamp: pageData.timestamp,
-                },
-              });
-            })
-            .catch((error) => {
-              console.error("Error importing scanner:", error);
-              sendResponse({ success: false, error: "Failed to load scanner" });
-            });
+          sendResponse({
+            success: true,
+            data: pageData,
+          });
         } catch (error) {
           console.error("Error extracting content:", error);
+          sendResponse({ success: false, error: String(error) });
+        }
+      }
+
+      if (request.action === "getEnhancedProductData") {
+        try {
+          const pageData = getPageSnapshot(request.force === true);
+          sendResponse({
+            success: true,
+            data: {
+              productData: pageData.productData,
+              metadata: pageData.metadata,
+              favicon: pageData.favicon,
+              structuredData: pageData.structuredData,
+              title: pageData.title,
+              url: pageData.url,
+              html: pageData.html,
+              content: pageData.content,
+            },
+          });
+        } catch (error) {
+          console.error("Error getting enhanced product data:", error);
           sendResponse({ success: false, error: String(error) });
         }
       }
