@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -21,19 +21,22 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import soundcore from "@/assets/soundcore.png";
 import { ArrowUpRightIcon, CalendarDotIcon } from "@phosphor-icons/react";
+import { fetchProductsByCategory, type UICategory } from "@/components/functions/db/products_fetch";
 
 interface Product {
   id: string;
   name: string;
-  image: string;
+  image?: string;
   url: string;
   price: string;
   visitedAt: string;
-  rating: number;
+  rating?: number;
   description?: string;
-
   category: string;
   subcategory?: string;
+  discount?: string;
+  visitCount?: number;
+  lowestPrice?: string;
 }
 
 interface Category {
@@ -130,16 +133,32 @@ export const CategoryItem: React.FC<{
               transition={{ duration: 0.3, ease: "easeInOut" }}
             >
               <CollapsibleContent className="mt-3 space-y-2">
-                {category.subcategories?.map((subcategory, index) => (
-                  <motion.div
-                    key={subcategory.name}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <SubcategoryItem subcategory={subcategory} />
-                  </motion.div>
-                ))}
+                {/* Show subcategories if they exist */}
+                {category.subcategories && category.subcategories.length > 0 ? (
+                  category.subcategories.map((subcategory, index) => (
+                    <motion.div
+                      key={subcategory.name}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <SubcategoryItem subcategory={subcategory} />
+                    </motion.div>
+                  ))
+                ) : (
+                  /* Show products directly if no subcategories */
+                  category.products.map((product, index) => (
+                    <motion.div
+                      key={product.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="ml-6"
+                    >
+                      <ProductItem product={product} />
+                    </motion.div>
+                  ))
+                )}
               </CollapsibleContent>
             </motion.div>
           )}
@@ -231,102 +250,122 @@ export const ProductItem: React.FC<{ product: Product }> = ({ product }) => {
   const [isDescOpen, setIsDescOpen] = useState(false);
   return (
     <motion.div
-      whileHover={{ scale: 1.02, x: 5 }}
-      whileTap={{ scale: 0.98 }}
-      className="ml-12 p-4 bg-gradient-to-r from-card/40 to-card/20 border border-foreground/5 hover:border-primary/10 hover:shadow-md rounded-xl backdrop-blur-sm transition-all duration-200 group cursor-pointer"
+      whileHover={{ scale: 1.01 }}
+      className="ml-12 p-4 bg-gradient-to-r from-card/40 to-card/20 border border-foreground/5 hover:border-primary/10 hover:shadow-md rounded-xl backdrop-blur-sm transition-all duration-200 group"
     >
-      <div className="flex items-center gap-4">
-        <motion.div whileHover={{ scale: 1.1 }} className="relative">
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-12 h-12 rounded-xl object-cover border border-foreground/10 group-hover:border-primary/20 transition-colors"
-          />
-          <motion.div
-            initial={{ scale: 0 }}
-            whileHover={{ scale: 1 }}
-            className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center"
-          >
-            <StarIcon className="w-2.5 h-2.5 fill-white text-background" />
-          </motion.div>
+      <div className="flex items-start gap-4 w-full">
+        <motion.div whileHover={{ scale: 1.1 }} className="relative flex-shrink-0">
+          {product.image ? (
+            <img
+              src={product.image}
+              alt={product.name}
+              className="w-16 h-16 rounded-xl object-cover border border-foreground/10 group-hover:border-primary/20 transition-colors"
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-xl bg-foreground/5 border border-foreground/10 group-hover:border-primary/20 transition-colors flex items-center justify-center">
+              <TagIcon className="w-8 h-8 text-foreground/30" />
+            </div>
+          )}
+          {product.visitCount && product.visitCount > 1 && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center"
+            >
+              <span className="text-[10px] font-bold text-white">{product.visitCount}</span>
+            </motion.div>
+          )}
         </motion.div>
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <h5 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors truncate">
-                {product.name}
-              </h5>
+        <div className="flex-1 min-w-0 flex flex-col gap-2">
+          {/* Title and Link */}
+          <div className="flex items-start justify-between gap-2 w-full">
+            <h5 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors line-clamp-2 flex-1 min-w-0">
+              {product.name}
+            </h5>
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="p-2 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors flex-shrink-0"
+              onClick={() => window.open(product.url, "_blank")}
+            >
+              <ArrowUpRightIcon className="text-primary h-3.5 w-3.5" />
+            </motion.button>
+          </div>
 
-              <div className="flex items-center gap-3 mt-2">
-                <div className="flex items-center gap-1">
-                  <CalendarDotIcon className="w-3 h-3 text-foreground/50" />
-
-                  <span className="text-xs text-foreground/60">
-                    {new Date(product.visitedAt).toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between mt-2">
-                <span className="text-sm font-bold text-foreground/50 group-hover:text-foreground/90 transition-colors">
-                  {product.price}
+          {/* Metadata Row */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-1">
+              <CalendarDotIcon className="w-3 h-3 text-foreground/50" />
+              <span className="text-xs text-foreground/60">
+                {new Date(product.visitedAt).toLocaleDateString()}
+              </span>
+            </div>
+            {product.discount && (
+              <div className="px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/20">
+                <span className="text-xs font-semibold text-green-600 dark:text-green-400">
+                  {product.discount}
                 </span>
-
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="p-2 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors group-hover:bg-primary/20"
-                  onClick={() => window.open(product.url, "_blank")}
-                >
-                  {/* <ExternalLinkIcon className="w-3 h-3 text-primary" /> */}
-                  <ArrowUpRightIcon className="text-primary h-3 w-3" />
-                </motion.button>
               </div>
+            )}
+          </div>
 
-              {product.description && (
-                <div className="mt-2">
-                  <Collapsible open={isDescOpen} onOpenChange={setIsDescOpen}>
-                    <CollapsibleTrigger asChild>
-                      <motion.div
-                        whileHover={{ scale: 1.01 }}
-                        whileTap={{ scale: 0.99 }}
-                        className="flex items-center justify-between p-2 rounded-lg bg-card/30 border border-foreground/5 hover:border-primary/10 transition-colors cursor-pointer"
-                      >
-                        <span className="text-xs font-medium text-foreground/70 group-hover:text-foreground/90">
-                          Description
-                        </span>
-                        <motion.span
-                          animate={{ rotate: isDescOpen ? 180 : 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="p-1 rounded-full bg-primary/5"
-                        >
-                          <ChevronDownIcon className="w-3 h-3 text-primary/70" />
-                        </motion.span>
-                      </motion.div>
-                    </CollapsibleTrigger>
-
-                    <AnimatePresence>
-                      {isDescOpen && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.25 }}
-                        >
-                          <CollapsibleContent className="pt-2">
-                            <p className="text-xs leading-relaxed text-foreground/70">
-                              {product.description}
-                            </p>
-                          </CollapsibleContent>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </Collapsible>
-                </div>
+          {/* Price Row */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-base font-bold text-foreground/80 group-hover:text-foreground transition-colors">
+                {product.price}
+              </span>
+              {product.lowestPrice && product.lowestPrice !== product.price && (
+                <span className="text-xs text-foreground/50 line-through">
+                  {product.lowestPrice}
+                </span>
               )}
             </div>
           </div>
+
+          {/* Description Collapsible */}
+          {product.description && (
+            <div className="mt-1">
+              <Collapsible open={isDescOpen} onOpenChange={setIsDescOpen}>
+                <CollapsibleTrigger asChild>
+                  <motion.div
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    className="flex items-center justify-between p-2 rounded-lg bg-card/30 border border-foreground/5 hover:border-primary/10 transition-colors cursor-pointer"
+                  >
+                    <span className="text-xs font-medium text-foreground/70 group-hover:text-foreground/90">
+                      {isDescOpen ? "Hide" : "Show"} Description
+                    </span>
+                    <motion.span
+                      animate={{ rotate: isDescOpen ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="p-1 rounded-full bg-primary/5"
+                    >
+                      <ChevronDownIcon className="w-3 h-3 text-primary/70" />
+                    </motion.span>
+                  </motion.div>
+                </CollapsibleTrigger>
+
+                <AnimatePresence>
+                  {isDescOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.25 }}
+                    >
+                      <CollapsibleContent className="pt-2">
+                        <p className="text-xs leading-relaxed text-foreground/70 break-words">
+                          {product.description}
+                        </p>
+                      </CollapsibleContent>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </Collapsible>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>
@@ -376,171 +415,25 @@ export const PastProductsMain: React.FC = () => {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
     new Set()
   );
+  const [categories, setCategories] = useState<UICategory[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data - replace with actual data from your state management
-  const categories: Category[] = [
-    {
-      name: "Audio & Headphones",
-      count: 12,
-      subcategories: [
-        {
-          name: "Wireless Headphones",
-          count: 8,
-          products: [
-            {
-              id: "1",
-              name: "Sony WH-1000XM5",
-              image: soundcore,
-              url: "https://www.sony.com/headphones/wh-1000xm5",
-              price: "$399.99",
-              visitedAt: "2024-01-15",
-              rating: 4.8,
-              description:
-                "Premium over-ear headphones with industry-leading noise cancellation, crystal-clear calls, and all-day comfort.",
-              category: "Audio & Headphones",
-              subcategory: "Wireless Headphones",
-            },
-            {
-              id: "2",
-              name: "Bose QuietComfort 45",
-              image: soundcore,
-              url: "https://www.bose.com/quietcomfort-45",
-              price: "$329.00",
-              visitedAt: "2024-01-10",
-              rating: 4.6,
-              description:
-                "Balanced sound with excellent comfort and reliable ANC for commuting, work, and travel.",
-              category: "Audio & Headphones",
-              subcategory: "Wireless Headphones",
-            },
-            {
-              id: "3",
-              name: "Apple AirPods Pro 2",
-              image: soundcore,
-              url: "https://www.apple.com/airpods-pro",
-              price: "$249.00",
-              visitedAt: "2024-01-05",
-              rating: 4.5,
-              description:
-                "Adaptive Transparency and improved ANC in a compact, seamless experience across Apple devices.",
-              category: "Audio & Headphones",
-              subcategory: "Wireless Headphones",
-            },
-          ],
-        },
-        {
-          name: "Wired Headphones",
-          count: 4,
-          products: [
-            {
-              id: "4",
-              name: "Sennheiser HD 660S",
-              image: soundcore,
-              url: "https://www.sennheiser.com/hd-660-s",
-              price: "$499.95",
-              visitedAt: "2024-01-08",
-              rating: 4.7,
-              description:
-                "Reference-grade open-back headphones delivering natural, detailed sound with wide soundstage.",
-              category: "Audio & Headphones",
-              subcategory: "Wired Headphones",
-            },
-          ],
-        },
-      ],
-      products: [],
-    },
-    {
-      name: "Electronics",
-      count: 8,
-      subcategories: [
-        {
-          name: "Smartphones",
-          count: 3,
-          products: [
-            {
-              id: "5",
-              name: "iPhone 15 Pro",
-              image: soundcore,
-              url: "https://www.apple.com/iphone-15-pro",
-              price: "$999.00",
-              visitedAt: "2024-01-12",
-              rating: 4.9,
-              description:
-                "A17 Pro chip, titanium design, and advanced cameras for powerful performance and creativity.",
-              category: "Electronics",
-              subcategory: "Smartphones",
-            },
-          ],
-        },
-        {
-          name: "Laptops",
-          count: 5,
-          products: [
-            {
-              id: "6",
-              name: "MacBook Pro M3",
-              image: soundcore,
-              url: "https://www.apple.com/macbook-pro",
-              price: "$1999.00",
-              visitedAt: "2024-01-20",
-              rating: 4.8,
-              description:
-                "Blazing-fast M3 performance with stunning Liquid Retina display and exceptional battery life.",
-              category: "Electronics",
-              subcategory: "Laptops",
-            },
-          ],
-        },
-      ],
-      products: [],
-    },
-    {
-      name: "Home & Kitchen",
-      count: 6,
-      subcategories: [
-        {
-          name: "Kitchen Appliances",
-          count: 4,
-          products: [
-            {
-              id: "7",
-              name: "Instant Pot Duo",
-              image: soundcore,
-              url: "https://www.instantpot.com/duo",
-              price: "$99.95",
-              visitedAt: "2024-01-18",
-              rating: 4.6,
-              description:
-                "7-in-1 multi-cooker for fast and easy pressure cooking, slow cooking, and more.",
-              category: "Home & Kitchen",
-              subcategory: "Kitchen Appliances",
-            },
-          ],
-        },
-        {
-          name: "Home Decor",
-          count: 2,
-          products: [
-            {
-              id: "8",
-              name: "Smart Light Bulbs",
-              image: soundcore,
-              url: "https://www.philips.com/smart-lights",
-              price: "$49.99",
-              visitedAt: "2024-01-25",
-              rating: 4.4,
-              description:
-                "Color-changing, app-controlled bulbs with schedules and voice assistant compatibility.",
-              category: "Home & Kitchen",
-              subcategory: "Home Decor",
-            },
-          ],
-        },
-      ],
-      products: [],
-    },
-  ];
+  // Fetch products on mount
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        setLoading(true);
+        const fetchedCategories = await fetchProductsByCategory();
+        setCategories(fetchedCategories);
+      } catch (error) {
+        console.error("Failed to load products:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
 
   const toggleCategory = (categoryName: string) => {
     setExpandedCategories((prev) => {
@@ -557,6 +450,12 @@ export const PastProductsMain: React.FC = () => {
   const filteredCategories = categories
     .map((category) => ({
       ...category,
+      products: category.products.filter(
+        (product) =>
+          product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          product.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          product.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
       subcategories: category.subcategories
         ?.map((subcategory) => ({
           ...subcategory,
@@ -575,6 +474,7 @@ export const PastProductsMain: React.FC = () => {
     }))
     .filter(
       (category) =>
+        category.products.length > 0 ||
         (category.subcategories?.length ?? 0) > 0 ||
         category.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -582,12 +482,25 @@ export const PastProductsMain: React.FC = () => {
   const totalProducts = filteredCategories.reduce(
     (total, cat) =>
       total +
+      cat.products.length +
       (cat.subcategories?.reduce(
         (subTotal, sub) => subTotal + sub.products.length,
         0
       ) || 0),
     0
   );
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center space-y-2">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="text-sm text-foreground/60">Loading products...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <motion.div

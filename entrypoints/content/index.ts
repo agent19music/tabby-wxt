@@ -4,6 +4,7 @@ import {
   isSocialMediaUrl,
 } from "@/components/functions/content_scanner";
 import type { PageData } from "@/components/functions/content_scanner";
+import { storePageData, shouldScanUrl } from "@/components/functions/db/products_site_storage";
 
 export default defineContentScript({
   matches: ["<all_urls>"],
@@ -46,9 +47,30 @@ export default defineContentScript({
       detachLifecycleListeners();
 
       try {
+        const currentUrl = window.location.href;
+        
+        // Check if URL was recently scanned (within 72 hours)
+        const shouldScan = await shouldScanUrl(currentUrl);
+        if (!shouldScan) {
+          console.log("Skipping scan: URL was visited within the last 72 hours");
+          return;
+        }
+
         console.log("Starting page extraction...");
         const pageData = await scanPageContentWithAI();
         console.log("Page data extracted:", pageData);
+        
+        // Store the page data only if worth_storing is true
+        if (pageData.worth_storing !== false) {
+          try {
+            const result = await storePageData(pageData);
+            console.log("Page data stored in Chrome storage:", result);
+          } catch (storageError) {
+            console.error("Failed to store page data:", storageError);
+          }
+        } else {
+          console.log("Skipping storage: page not worth storing (landing page, category page, etc.)");
+        }
         
         chrome.runtime.sendMessage({
           action: "pageContentExtracted",
@@ -137,7 +159,33 @@ export default defineContentScript({
       if (request.action === "getPageContent") {
         (async () => {
           try {
+            const currentUrl = window.location.href;
+            
+            // Check if URL was recently scanned (within 72 hours)
+            const shouldScan = await shouldScanUrl(currentUrl);
+            if (!shouldScan) {
+              console.log("Skipping manual scan: URL was visited within the last 72 hours");
+              sendResponse({
+                success: false,
+                error: "URL was scanned within the last 72 hours. Please wait before rescanning.",
+              });
+              return;
+            }
+
             const pageData = await scanPageContentWithAI();
+            
+            // Store the page data only if worth_storing is true
+            if (pageData.worth_storing !== false) {
+              try {
+                const result = await storePageData(pageData);
+                console.log("Page data stored in Chrome storage:", result);
+              } catch (storageError) {
+                console.error("Failed to store page data:", storageError);
+              }
+            } else {
+              console.log("Skipping storage: page not worth storing");
+            }
+            
             sendResponse({
               success: true,
               data: pageData,

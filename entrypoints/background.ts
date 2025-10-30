@@ -44,6 +44,7 @@ export default defineBackground(() => {
         summary: message.data?.summary,
         tags: message.data?.tags,
         is_product: message.data?.is_product,
+        worth_storing: message.data?.worth_storing,
         product_price: message.data?.product_price,
         product_discount: message.data?.product_discount,
         product_condition: message.data?.product_condition,

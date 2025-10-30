@@ -21,6 +21,8 @@ export interface Product {
   first_seen: number; // Timestamp of first visit
   last_seen: number; // Timestamp of most recent visit
   visit_count: number; // How many times user viewed this product
+  lowest_price?: string; // Best price seen
+  lowest_price_url?: string; // URL where lowest price was found
 }
 
 // ProductHistory - Individual product page visits for price tracking
@@ -95,11 +97,15 @@ export interface ExtractedPageData {
   // Site category
   site_category?: SiteCategory;
   
+  // Storage flag
+  worth_storing?: boolean; // Whether this page is worth storing (filters out landing pages, etc.)
+  
   // Product-specific fields
   is_product?: boolean;
   product_price?: string;
   product_discount?: string;
   product_condition?: ProductCondition;
+  product_category?: string; // ProductCategory enum value
   product_summary?: string;
   product_pros?: string[];
   product_cons?: string[];

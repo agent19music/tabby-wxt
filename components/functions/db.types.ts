@@ -84,6 +84,72 @@ export enum SiteCategory {
   GOVERNMENT = "government",
   UNKNOWN = "unknown",
 }
+export enum ProductCategory {
+  // Core Shopping Categories
+  ELECTRONICS = "electronics",
+  HOME_KITCHEN = "home_kitchen",
+  CLOTHING_FASHION = "clothing_fashion",
+  BEAUTY_PERSONAL_CARE = "beauty_personal_care",
+  HEALTH_WELLNESS = "health_wellness",
+  SPORTS_OUTDOORS = "sports_outdoors",
+  TOYS_GAMES = "toys_games",
+  BABY_KIDS = "baby_kids",
+  
+  // Media & Entertainment
+  BOOKS = "books",
+  MOVIES_TV = "movies_tv",
+  MUSIC = "music",
+  VIDEO_GAMES = "video_games",
+  
+  // Work & Education
+  OFFICE_SUPPLIES = "office_supplies",
+  SCHOOL_SUPPLIES = "school_supplies",
+  
+  // Automotive & Transportation
+  AUTOMOTIVE = "automotive",
+  MOTORCYCLE_POWERSPORTS = "motorcycle_powersports",
+  
+  // Home Improvement & Garden
+  TOOLS_HARDWARE = "tools_hardware",
+  HOME_IMPROVEMENT = "home_improvement",
+  LAWN_GARDEN = "lawn_garden",
+  
+  // Pet Care
+  PET_SUPPLIES = "pet_supplies",
+
+  // Adult Products
+  ADULT = "adult",
+  
+  // Food & Beverage
+  GROCERY = "grocery",
+  GOURMET_FOOD = "gourmet_food",
+  BEVERAGES = "beverages",
+  ALCOHOL = "alcohol",
+  
+  // Creative & Hobbies
+  ARTS_CRAFTS = "arts_crafts",
+  MUSICAL_INSTRUMENTS = "musical_instruments",
+  SEWING_FABRIC = "sewing_fabric",
+  PARTY_SUPPLIES = "party_supplies",
+  
+  // Specialty Categories
+  INDUSTRIAL_SCIENTIFIC = "industrial_scientific",
+  COLLECTIBLES_FINE_ART = "collectibles_fine_art",
+  JEWELRY_WATCHES = "jewelry_watches",
+  LUGGAGE_TRAVEL = "luggage_travel",
+  FURNITURE = "furniture",
+  APPLIANCES = "appliances",
+  BEDDING_BATH = "bedding_bath",
+  
+  // Services & Digital
+  GIFT_CARDS = "gift_cards",
+  DIGITAL_PRODUCTS = "digital_products",
+  SERVICES = "services",
+  SUBSCRIPTIONS = "subscriptions",
+  
+  // Catchall
+  OTHER = "other",
+}
 
 // Site metadata - cached per domain
 export interface SiteMeta {
@@ -146,11 +212,15 @@ export interface ExtractedPageData {
   // Site category
   site_category?: SiteCategory;
   
+  // Storage flag
+  worth_storing?: boolean; // Whether this page is worth storing (filters out landing pages, etc.)
+  
   // Product-specific fields
   is_product?: boolean;
   product_price?: string;
   product_discount?: string;
   product_condition?: "new" | "refurbished" | "used" | "unknown";
+  product_category?: string; // ProductCategory enum value
   product_summary?: string;
   product_pros?: string[];
   product_cons?: string[];
