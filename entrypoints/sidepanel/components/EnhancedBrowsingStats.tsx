@@ -267,7 +267,7 @@ export function EnhancedBrowsingStats() {
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-xl border border-border/50 p-4">
             <div className="flex items-center gap-2 mb-2">
-              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: "#5ac8fa" }} />
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: "#f0f0f0" }} />
               <div className="text-xs text-muted-foreground font-medium font-sans">
                 Total time
               </div>
@@ -287,7 +287,7 @@ export function EnhancedBrowsingStats() {
 
           <div className="rounded-xl border border-border/50 p-4">
             <div className="flex items-center gap-2 mb-2">
-              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: "#ff9f0a" }} />
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: "#f0f0f0" }} />
               <div className="text-xs text-muted-foreground font-medium">
                 Total Visits
               </div>
@@ -344,7 +344,7 @@ export function EnhancedBrowsingStats() {
                   className="w-2 h-2 rounded-full inline-block shadow-sm"
                   style={{ backgroundColor: item.fill }}
                 />
-                <span style={{ color: item.fill }} className="font-medium">
+                <span className="font-medium">
                   {item.label}
                 </span>
               </div>
