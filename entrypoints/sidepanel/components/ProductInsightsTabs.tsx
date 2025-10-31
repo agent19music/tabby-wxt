@@ -64,12 +64,23 @@ interface ProductInsightsTabsProps {
     url: string;
     category: string;
   };
+  relatedProductIds?: string[]; // IDs of AI-recommended related products
+  allProducts?: Array<{
+    id: string;
+    title: string;
+    image?: string;
+    url: string;
+    price?: string;
+    category: string;
+  }>;
 }
 
 export const ProductInsightsTabs: React.FC<ProductInsightsTabsProps> = ({
   insights,
   searchHistory,
   currentProduct,
+  relatedProductIds = [],
+  allProducts = [],
 }) => {
   const [dateRange, setDateRange] = useState<string>("all");
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
@@ -114,14 +125,44 @@ export const ProductInsightsTabs: React.FC<ProductInsightsTabsProps> = ({
     );
   };
 
-  const relatedProducts = filterProductsByDateRange(
-    searchHistory.filter(
-      (product) =>
-        product.category === currentProduct.category &&
-        product.name !== currentProduct.name
-    ),
-    dateRange
-  ).slice(0, 8);
+  // Get related products from AI recommendations or fallback to search history
+  const getRelatedProducts = (): SearchHistoryProduct[] => {
+    // If we have AI recommendations, use those
+    if (relatedProductIds.length > 0 && allProducts.length > 0) {
+      const aiRecommended: SearchHistoryProduct[] = [];
+      
+      for (const id of relatedProductIds) {
+        const product = allProducts.find(p => p.id === id);
+        if (product) {
+          // Convert to SearchHistoryProduct format
+          aiRecommended.push({
+            id: product.id,
+            name: product.title,
+            image: product.image || '',
+            url: product.url,
+            price: product.price,
+            visitedAt: new Date().toISOString(), // Use current date since we don't have visit date
+            category: product.category,
+            // AI insights not available for recommended products
+          });
+        }
+      }
+      
+      return aiRecommended;
+    }
+    
+    // Fallback to search history filtering
+    return filterProductsByDateRange(
+      searchHistory.filter(
+        (product) =>
+          product.category === currentProduct.category &&
+          product.name !== currentProduct.name
+      ),
+      dateRange
+    ).slice(0, 8);
+  };
+
+  const relatedProducts = getRelatedProducts();
   const tabs = [
     {
       label: "AI Insights",

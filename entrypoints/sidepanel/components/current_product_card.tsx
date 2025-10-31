@@ -12,6 +12,7 @@ import { ProductInsightsTabs } from "./ProductInsightsTabs";
 import { getProductByUrl, type UIProduct } from "@/components/functions/db/products_fetch";
 import { Product } from "@/components/types/db";
 import { getAllProducts } from "@/components/functions/db/products_site_storage";
+import { findRelatedProducts, type RecommendationResult } from "@/components/functions/current_product/related_products";
 
 type Props = {};
 
@@ -22,6 +23,9 @@ export const CurrentProductCard = (props: Props) => {
   const [currentUrl, setCurrentUrl] = useState<string>("");
   const [showProcessingHint, setShowProcessingHint] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [recommendations, setRecommendations] = useState<RecommendationResult | null>(null);
+  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     // Get current tab URL on mount
@@ -93,9 +97,10 @@ export const CurrentProductCard = (props: Props) => {
       
       const fetchProduct = async () => {
         try {
-          const allProducts = await getAllProducts();
-          console.log("All products:", allProducts.length);
-          const product = allProducts.find(p => p.url === currentUrl);
+          const products = await getAllProducts();
+          setAllProducts(products);
+          console.log("All products:", products.length);
+          const product = products.find(p => p.url === currentUrl);
           console.log("Found product:", product ? product.title : "none");
           setCurrentProduct(product || null);
           
@@ -115,6 +120,42 @@ export const CurrentProductCard = (props: Props) => {
       fetchProduct();
     }
   }, [currentUrl, refreshTrigger]);
+
+  // Effect to find related products when current product changes
+  useEffect(() => {
+    if (currentProduct && !isLoading) {
+      const fetchRelatedProducts = async () => {
+        try {
+          setIsLoadingRecommendations(true);
+          
+          const result = await findRelatedProducts(
+            currentProduct.id,
+            currentProduct.title,
+            currentProduct.category,
+            currentProduct.summary,
+            allProducts.map(p => ({
+              id: p.id,
+              title: p.title,
+              category: p.category,
+              summary: p.summary,
+              price: p.price,
+            }))
+          );
+          
+          setRecommendations(result);
+        } catch (error) {
+          console.error('Error fetching related products:', error);
+          setRecommendations(null);
+        } finally {
+          setIsLoadingRecommendations(false);
+        }
+      };
+
+      fetchRelatedProducts();
+    } else {
+      setRecommendations(null);
+    }
+  }, [currentProduct, isLoading]);
 
   // Convert product pros/cons to aiInsights format
   const aiInsights = currentProduct && !isLoading ? [
@@ -455,53 +496,62 @@ export const CurrentProductCard = (props: Props) => {
                 url: currentProduct.url,
                 category: currentProduct.category,
               }}
+              relatedProductIds={recommendations?.relatedProducts.map(p => p.id) || []}
+              allProducts={allProducts.map(p => ({
+                id: p.id,
+                title: p.title,
+                image: p.image,
+                url: p.url,
+                price: p.price,
+                category: p.category,
+              }))}
             />
           </div>
 
           {/* Most Recommended */}
-          <div className="border-t border-foreground/5 pt-4">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-2 h-2  font-semibold rounded-full"></div>
-              <h3 className="font-semibold text-sm">Most Recommended</h3>
-            </div>
-            <div className="bg-input backdrop-blur-3xl p-3 rounded-3xl border border-foreground/5">
-              <p className="text-xs text-foreground/70 leading-relaxed mb-2">
-                Based on your browsing history and preferences, the{" "}
-                <span className="font-medium text-foreground">
-                  Sony WH-1000XM5
-                </span>{" "}
-                is the most recommended option for you. It offers superior noise
-                cancellation and sound quality, perfect for your travel needs.
-              </p>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <img
-                    src={soundcore}
-                    alt="Sony WH-1000XM5"
-                    className="w-8 h-8 rounded"
-                  />
-                  <div>
-                    <p className="text-xs font-medium">Sony WH-1000XM5</p>
-                    <p className="text-xs text-muted-foreground font-medium">
-                      $399.99
-                    </p>
+          {recommendations?.mostRecommended && (
+            <div className="border-t border-foreground/5 pt-4">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-2 h-2 bg-green-500 font-semibold rounded-full"></div>
+                <h3 className="font-semibold text-sm">Most Recommended</h3>
+              </div>
+              <div className="bg-input backdrop-blur-3xl p-3 rounded-3xl border border-foreground/5">
+                <p className="text-xs text-foreground/70 leading-relaxed mb-2">
+                  {recommendations.mostRecommended.reason}
+                </p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={soundcore}
+                      alt={recommendations.mostRecommended.name}
+                      className="w-8 h-8 rounded"
+                    />
+                    <div>
+                      <p className="text-xs font-medium">{recommendations.mostRecommended.name}</p>
+                      <p className="text-xs text-muted-foreground font-medium">
+                        Relevance: {recommendations.mostRecommended.relevanceScore}%
+                      </p>
+                    </div>
                   </div>
+                  <Button
+                    size="sm"
+                    className="h-6 px-2 text-xs rounded-[10px]"
+                    onClick={() => {
+                      // Find the full product data
+                      getAllProducts().then(products => {
+                        const product = products.find(p => p.id === recommendations.mostRecommended?.id);
+                        if (product?.url) {
+                          window.open(product.url, "_blank");
+                        }
+                      });
+                    }}
+                  >
+                    View
+                  </Button>
                 </div>
-                <Button
-                  size="sm"
-                  className="h-6 px-2 text-xs rounded-[10px]"
-                  onClick={() =>
-                    window.open(
-                      "https://www.sony.com/headphones/wh-1000xm5",
-                      "_blank"
-                    )
-                  }
-                >
-                  View
-                </Button>
               </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>
