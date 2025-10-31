@@ -49,18 +49,20 @@ function formatChange(change: number): string {
 }
 
 function generateDailyBreakdown(coloredCategories: any[]) {
-  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const daysShort = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const daysFull = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   const now = new Date();
   const currentDay = now.getDay();
   
   // Generate last 7 days with proper day names
   const dailyData = Array.from({ length: 7 }, (_, i) => {
     const dayIndex = (currentDay - 6 + i + 7) % 7;
-    const dayName = days[dayIndex];
+    const dayNameShort = daysShort[dayIndex];
+    const dayNameFull = daysFull[dayIndex];
     
     // Generate semi-random but consistent data based on day index
     const baseMultiplier = 0.6 + (Math.sin(i * 1.5) * 0.4);
-    const dayData: any = { day: dayName };
+    const dayData: any = { day: dayNameShort, dayFull: dayNameFull };
     
     coloredCategories.forEach((cat) => {
       // Distribute time across days with some variation
@@ -407,7 +409,18 @@ export function EnhancedBrowsingStats() {
               />
               <ChartTooltip
                 cursor={false}
-                content={<ChartTooltipContent hideLabel formatter={(value) => formatTime(value as number)} />}
+                content={<ChartTooltipContent 
+                  labelFormatter={(label, payload) => {
+                    return payload?.[0]?.payload?.dayFull || label;
+                  }} 
+                  formatter={(value, name) => {
+                    const categoryName = barChartConfig[name as keyof typeof barChartConfig]?.label || name;
+                    return `${categoryName}: ${formatTime(value as number)}`;
+                  }}
+                  itemSorter={(item) => {
+                    return -(item.value as number);
+                  }}
+                />}
               />
               {coloredCategories.slice().reverse().map((stat) => (
                 <Bar

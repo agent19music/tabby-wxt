@@ -124,6 +124,35 @@ export async function getProductById(id: string): Promise<Product | null> {
 }
 
 /**
+ * Update a product with partial data
+ */
+export async function updateProduct(id: string, updates: Partial<Product>): Promise<boolean> {
+  try {
+    const result = await chrome.storage.local.get(STORAGE_KEYS.PRODUCTS);
+    const productsMap = (result[STORAGE_KEYS.PRODUCTS] as Record<string, Product>) || {};
+    
+    const existingProduct = productsMap[id];
+    if (!existingProduct) {
+      console.error(`Product ${id} not found`);
+      return false;
+    }
+    
+    // Merge updates
+    productsMap[id] = {
+      ...existingProduct,
+      ...updates,
+    };
+    
+    await chrome.storage.local.set({ [STORAGE_KEYS.PRODUCTS]: productsMap });
+    console.log(`✅ Product ${id} updated`);
+    return true;
+  } catch (error) {
+    console.error("Failed to update product:", error);
+    return false;
+  }
+}
+
+/**
  * Get or create site metadata
  */
 async function getOrCreateSiteMeta(

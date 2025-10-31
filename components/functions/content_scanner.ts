@@ -885,6 +885,10 @@ async function analyzeYoutubeReview(
           type: "string",
           description: "For single_review: The exact product name/model"
         },
+        canonical_product_name: {
+          type: "string",
+          description: "For single_review: Normalized product name (e.g., 'iPhone 15 Pro', 'MacBook Pro M4', 'Sony WH-1000XM5'). Remove filler words, brand adjectives, and normalize variants."
+        },
         product_category: {
           type: "string",
           enum: categoryEnum,
@@ -915,6 +919,10 @@ async function analyzeYoutubeReview(
             type: "object",
             properties: {
               product_name: { type: "string" },
+              canonical_product_name: { 
+                type: "string",
+                description: "Normalized product name (e.g., 'iPhone 15 Pro', 'MacBook Pro M4'). Remove filler words and normalize."
+              },
               product_category: { type: "string", enum: categoryEnum },
               rank: { type: "number", description: "For roundup: 1=best, 2=second best, etc." },
               pros: { type: "array", items: { type: "string" } },
@@ -923,7 +931,7 @@ async function analyzeYoutubeReview(
               price_mentioned: { type: "string" },
               sentiment: { type: "string", enum: ["positive", "neutral", "negative"] }
             },
-            required: ["product_name", "product_category", "pros", "cons"]
+            required: ["product_name", "canonical_product_name", "product_category", "pros", "cons"]
           },
           description: "For versus/roundup: Array of products being compared"
         },
@@ -975,19 +983,32 @@ ${transcript ? 'IMPORTANT: Use the transcript to extract product names, pros/con
 
 EXTRACTION RULES:
 
+CANONICAL PRODUCT NAMES:
+For both product_name AND canonical_product_name fields, use this format:
+- product_name: The exact name as mentioned in video (e.g., "Apple MacBook Pro 14-inch M4 Pro Chip")
+- canonical_product_name: Normalized, simplified version for matching (e.g., "MacBook Pro M4")
+
+Canonical name rules:
+✓ Include: Brand (if part of official name), Model, Key Variant
+✓ Examples: "iPhone 15 Pro", "MacBook Pro M4", "Sony WH-1000XM5", "AirPods Pro 2"
+✗ Remove: Filler words, marketing terms, descriptive adjectives, sizes unless critical
+✗ Bad: "The Amazing Apple MacBook Pro 14 inch with M4 Pro Chip in Space Gray"
+✓ Good: "MacBook Pro M4"
+
 FOR SINGLE_REVIEW:
-- Extract product name (exact model/variant from transcript or title)
+- Extract product_name (exact as mentioned in video)
+- Extract canonical_product_name (normalized version)
 - Extract pros/cons mentioned
 - Provide overall sentiment and summary
 
 FOR VERSUS:
-- Extract BOTH product names
+- Extract BOTH products with product_name AND canonical_product_name
 - Extract pros/cons for EACH product
 - Identify which product won (winner field)
 - Provide comparison summary
 
 FOR ROUNDUP:
-- Extract ALL product names (at least 3)
+- Extract ALL products (at least 3) with product_name AND canonical_product_name
 - Assign rank to each (1 = best, 2 = second best, etc.)
 - Extract pros/cons for EACH product
 - Provide verdict for each ("Best Overall", "Best Value", "Best for Gaming", etc.)

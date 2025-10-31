@@ -7,12 +7,17 @@ import {
   ShoppingBagIcon,
   ArrowUpRightIcon,
   Loader2,
+  VideoIcon,
+  ThumbsUpIcon,
+  ThumbsDownIcon,
+  ExternalLinkIcon,
 } from "lucide-react";
 import { ProductInsightsTabs } from "./ProductInsightsTabs";
 import { getProductByUrl, type UIProduct } from "@/components/functions/db/products_fetch";
-import { Product } from "@/components/types/db";
+import { Product, YoutubeReview } from "@/components/types/db";
 import { getAllProducts } from "@/components/functions/db/products_site_storage";
 import { findRelatedProducts, type RecommendationResult } from "@/components/functions/current_product/related_products";
+import { getLinkedReviewsForProduct } from "@/components/functions/db/youtube_product_linker";
 
 type Props = {};
 
@@ -26,6 +31,8 @@ export const CurrentProductCard = (props: Props) => {
   const [recommendations, setRecommendations] = useState<RecommendationResult | null>(null);
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [linkedReviews, setLinkedReviews] = useState<YoutubeReview[]>([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
 
   useEffect(() => {
     // Get current tab URL on mount
@@ -154,6 +161,29 @@ export const CurrentProductCard = (props: Props) => {
       fetchRelatedProducts();
     } else {
       setRecommendations(null);
+    }
+  }, [currentProduct, isLoading]);
+
+  // Effect to fetch linked YouTube reviews
+  useEffect(() => {
+    if (currentProduct && !isLoading) {
+      const fetchLinkedReviews = async () => {
+        try {
+          setIsLoadingReviews(true);
+          const reviews = await getLinkedReviewsForProduct(currentProduct.id);
+          setLinkedReviews(reviews);
+          console.log(`[CurrentProductCard] Found ${reviews.length} linked YouTube reviews`);
+        } catch (error) {
+          console.error('Error fetching linked reviews:', error);
+          setLinkedReviews([]);
+        } finally {
+          setIsLoadingReviews(false);
+        }
+      };
+
+      fetchLinkedReviews();
+    } else {
+      setLinkedReviews([]);
     }
   }, [currentProduct, isLoading]);
 
@@ -507,6 +537,79 @@ export const CurrentProductCard = (props: Props) => {
               }))}
             />
           </div>
+
+          {/* YouTube Reviews */}
+          {linkedReviews.length > 0 && (
+            <div className="border-t border-border/50 pt-4">
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="w-2 h-2 bg-red-500 rounded-full shadow-sm"></div>
+                <h3 className="font-semibold text-sm">YouTube Reviews You Watched</h3>
+              </div>
+              <div className="space-y-3">
+                {linkedReviews.map((review) => {
+                  // Get product data from review (match by canonical name)
+                  const reviewProduct = review.review_type === "single_review" 
+                    ? { name: review.product_name, pros: review.pros, cons: review.cons, verdict: review.verdict }
+                    : review.products?.find(p => 
+                        // Match canonical names (case-insensitive)
+                        p.canonical_product_name?.toLowerCase() === currentProduct.canonical_name.toLowerCase() ||
+                        p.product_name.toLowerCase().includes(currentProduct.canonical_name.toLowerCase()) ||
+                        currentProduct.canonical_name.toLowerCase().includes(p.canonical_product_name?.toLowerCase() || '')
+                      );
+
+                  return (
+                    <div key={review.id} className="bg-input backdrop-blur-sm p-4 rounded-2xl border border-border/50 hover:border-border transition-colors">
+                      <div className="flex gap-3">
+                        <div className="flex-shrink-0">
+                          <VideoIcon className="w-10 h-10 text-red-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-medium mb-1 truncate">{review.video_title}</h4>
+                          <p className="text-xs text-muted-foreground mb-2">{review.channel_name}</p>
+                          
+                          {reviewProduct && (
+                            <div className="space-y-2 mb-3">
+                              {reviewProduct.pros && reviewProduct.pros.length > 0 && (
+                                <div className="flex items-start gap-2">
+                                  <ThumbsUpIcon className="w-3 h-3 text-green-500 mt-0.5 flex-shrink-0" />
+                                  <p className="text-xs text-foreground/80 line-clamp-2">
+                                    {reviewProduct.pros.slice(0, 2).join(", ")}
+                                  </p>
+                                </div>
+                              )}
+                              {reviewProduct.cons && reviewProduct.cons.length > 0 && (
+                                <div className="flex items-start gap-2">
+                                  <ThumbsDownIcon className="w-3 h-3 text-red-500 mt-0.5 flex-shrink-0" />
+                                  <p className="text-xs text-foreground/80 line-clamp-2">
+                                    {reviewProduct.cons.slice(0, 2).join(", ")}
+                                  </p>
+                                </div>
+                              )}
+                              {reviewProduct.verdict && (
+                                <p className="text-xs text-foreground/70 italic line-clamp-2">
+                                  "{reviewProduct.verdict}"
+                                </p>
+                              )}
+                            </div>
+                          )}
+                          
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-xs rounded-lg gap-1"
+                            onClick={() => window.open(`https://youtube.com/watch?v=${review.video_id}`, '_blank')}
+                          >
+                            <ExternalLinkIcon className="w-3 h-3" />
+                            Watch Review
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Most Recommended */}
           {recommendations?.mostRecommended && (

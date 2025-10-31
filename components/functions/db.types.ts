@@ -21,6 +21,9 @@ export interface Product {
   visit_count: number; // How many times user viewed this product
   lowest_price?: string; // Best price seen
   lowest_price_url?: string; // URL where lowest price was found
+  
+  // Linked YouTube reviews
+  linked_review_ids?: string[]; // Array of YoutubeReview.id that mention this product
 }
 
 // ProductHistory - Individual product page visits for price tracking
@@ -247,6 +250,7 @@ export interface YoutubeReview {
   
   // Single product info (for single_review type)
   product_name?: string;
+  canonical_product_name?: string; // AI-normalized name like "iPhone 15 Pro" (for linking)
   product_category?: string;
   
   // Review analysis (for single_review type)
@@ -258,6 +262,7 @@ export interface YoutubeReview {
   // Multiple products (for versus/roundup types)
   products?: Array<{
     product_name: string;
+    canonical_product_name: string; // AI-normalized name for each product
     product_category: string;
     rank?: number; // 1-based rank for roundups (1 = best)
     pros: string[];

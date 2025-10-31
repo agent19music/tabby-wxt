@@ -1,5 +1,6 @@
 import { initializePromptAPI } from "./ai/main_ai";
 import { initializeSiteCategorization } from "./background/site_categorization";
+import { linkYoutubeReviewToProducts } from "@/components/functions/db/youtube_product_linker";
 
 export default defineBackground(() => {
   console.log("=== Background script loaded ===");
@@ -52,6 +53,36 @@ export default defineBackground(() => {
         product_pros: message.data?.product_pros,
         product_cons: message.data?.product_cons,
       });
+    }
+    
+    // Auto-link YouTube reviews to products
+    if (message?.action === "youtubeReviewDetected" && message?.data) {
+      console.log("[Background] 🔗 YouTube review detected, attempting to link to products...");
+      
+      (async () => {
+        try {
+          // The review was already saved in content script, we have the full data
+          const reviewData = message.data;
+          
+          // We need the review ID to link it - let's get it from storage by video_id
+          const { getYoutubeReviewByVideoId } = await import("@/components/functions/db/youtube_storage");
+          const savedReview = await getYoutubeReviewByVideoId(reviewData.videoData.video_id);
+          
+          if (savedReview) {
+            console.log(`[Background] Found saved review with ID: ${savedReview.id}`);
+            const linkedProductIds = await linkYoutubeReviewToProducts(savedReview.id);
+            console.log(`[Background] ✅ Linked review to ${linkedProductIds.length} products`);
+            
+            if (linkedProductIds.length > 0) {
+              console.log(`[Background] Linked product IDs:`, linkedProductIds);
+            }
+          } else {
+            console.log("[Background] ⚠️ Could not find saved review to link");
+          }
+        } catch (error) {
+          console.error("[Background] ❌ Failed to link YouTube review:", error);
+        }
+      })();
     }
   });
 });
