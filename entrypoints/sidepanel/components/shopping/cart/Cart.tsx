@@ -35,7 +35,7 @@ const CartItem: React.FC<{
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -12 }}
       transition={{ duration: 0.2 }}
-      className="p-4 bg-card rounded-2xl border border-foreground/5 hover:border-foreground/10 backdrop-blur-sm transition-all duration-200"
+      className="p-4 bg-card rounded-2xl border border-border/50 hover:border-border backdrop-blur-sm transition-all duration-200 shadow-sm"
     >
       <div className="flex items-start gap-3 w-full">
         <div className="relative shrink-0">
@@ -46,7 +46,7 @@ const CartItem: React.FC<{
               className="w-12 h-12 rounded-lg object-cover"
             />
           ) : (
-            <div className="w-12 h-12 rounded-lg bg-foreground/5 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-foreground/5 flex items-center justify-center border border-border/30">
               <TagIcon className="w-6 h-6 text-foreground/30" />
             </div>
           )}
@@ -81,14 +81,14 @@ const CartItem: React.FC<{
             {/* Action Buttons */}
             <div className="flex gap-1 shrink-0">
               <button
-                className="p-2 bg-foreground/5 hover:bg-foreground/10 rounded-full transition-colors"
+                className="p-2 bg-foreground/5 hover:bg-foreground/10 rounded-xl transition-all duration-200"
                 onClick={() => window.open(item.url, "_blank")}
                 title="Open product page"
               >
                 <ExternalLinkIcon className="w-4 h-4" />
               </button>
               <button
-                className="p-2 bg-foreground/5 hover:bg-foreground/10 rounded-full transition-colors"
+                className="p-2 bg-foreground/5 hover:bg-foreground/10 rounded-xl transition-all duration-200"
                 onClick={() => onRemove(item.id)}
                 title="Remove from cart"
               >

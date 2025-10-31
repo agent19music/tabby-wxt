@@ -428,9 +428,9 @@ export const CurrentProductCard = (props: Props) => {
   ];
 
   return (
-    <div className="bg-card rounded-[20px] backdrop-blur-3xl border border-foreground/5 hover:border-foreground/10 transition-colors overflow-hidden">
+    <div className="bg-card rounded-2xl backdrop-blur-sm border border-border/50 hover:border-border transition-all duration-200 overflow-hidden shadow-sm">
       <div
-        className="p-4 cursor-pointer rounded-t-[20px]"
+        className="p-5 cursor-pointer rounded-t-2xl"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center justify-between">
@@ -438,7 +438,7 @@ export const CurrentProductCard = (props: Props) => {
             <img
               src={currentProduct.image || soundcore}
               alt={currentProduct.title}
-              className="w-12 h-12 rounded-lg object-cover"
+              className="w-14 h-14 rounded-xl object-cover border border-border/30"
             />
             <div className="flex-1">
               <div className="flex flex-col">
@@ -459,12 +459,12 @@ export const CurrentProductCard = (props: Props) => {
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0 hover:bg-foreground/5 rounded-full transition-colors"
+            className="h-8 w-8 p-0 hover:bg-foreground/5 rounded-xl transition-all duration-200"
           >
             {isExpanded ? (
-              <ChevronUpIcon className="w-4 h-4" />
+              <ChevronUpIcon className="w-4 h-4 text-foreground/60" />
             ) : (
-              <ChevronDownIcon className="w-4 h-4" />
+              <ChevronDownIcon className="w-4 h-4 text-foreground/60" />
             )}
           </Button>
         </div>
@@ -475,11 +475,11 @@ export const CurrentProductCard = (props: Props) => {
         <div className="px-4 pb-4 space-y-4">
           {/* Action Buttons */}
           <div className="flex gap-2 justify-end">
-            <button className="p-2 bg-foreground/5 backdrop-blur-3xl hover:bg-foreground/5 rounded-full transition-colors">
+            <button className="p-2.5 bg-foreground/5 backdrop-blur-sm hover:bg-foreground/10 rounded-xl transition-all duration-200">
               <ShoppingBagIcon size={18} />
             </button>
             <button 
-              className="p-2 bg-foreground/5 backdrop-blur-3xl hover:bg-foreground/5 rounded-full transition-colors"
+              className="p-2.5 bg-foreground/5 backdrop-blur-sm hover:bg-foreground/10 rounded-xl transition-all duration-200"
               onClick={() => window.open(currentProduct.url, '_blank')}
             >
               <ArrowUpRightIcon size={18} />
@@ -510,12 +510,12 @@ export const CurrentProductCard = (props: Props) => {
 
           {/* Most Recommended */}
           {recommendations?.mostRecommended && (
-            <div className="border-t border-foreground/5 pt-4">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-2 h-2 bg-green-500 font-semibold rounded-full"></div>
+            <div className="border-t border-border/50 pt-4">
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="w-2 h-2 bg-[#30d158] rounded-full shadow-sm"></div>
                 <h3 className="font-semibold text-sm">Most Recommended</h3>
               </div>
-              <div className="bg-input backdrop-blur-3xl p-3 rounded-3xl border border-foreground/5">
+              <div className="bg-input backdrop-blur-sm p-4 rounded-2xl border border-border/50">
                 <p className="text-xs text-foreground/70 leading-relaxed mb-2">
                   {recommendations.mostRecommended.reason}
                 </p>

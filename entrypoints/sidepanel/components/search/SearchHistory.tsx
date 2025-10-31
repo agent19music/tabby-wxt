@@ -145,7 +145,7 @@ export default function SearchHistory() {
           <div className="relative">
             <SearchIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-foreground/40" />
             <input
-              className="bg-card/50 border-foreground/5 border min-h-12 p-2 pl-9 w-full rounded-[100px] backdrop-blur-sm focus:border-primary/50 transition-all duration-200"
+              className="bg-card/50 border-border/50 border min-h-12 p-2 pl-9 w-full rounded-[100px] backdrop-blur-sm focus:border-border transition-all duration-200 shadow-sm outline-none"
               placeholder="Search your history in any language..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -167,7 +167,7 @@ export default function SearchHistory() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ delay: index * 0.03 }}
-                className="p-4 bg-gradient-to-r from-card/60 to-card/40 rounded-2xl border border-foreground/10 hover:border-primary/20 hover:shadow-md backdrop-blur-sm transition-all duration-200"
+                className="p-4 bg-card rounded-2xl border border-border/50 hover:border-border hover:shadow-sm backdrop-blur-sm transition-all duration-200"
               >
                 <div className="flex items-start gap-4">
                   <div className="shrink-0">

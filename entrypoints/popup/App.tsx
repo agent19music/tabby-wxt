@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { BarChart3, ShoppingBag, Brain } from "lucide-react";
+import { ChartPieSliceIcon, ShoppingBagOpenIcon,HeadCircuitIcon } from "@phosphor-icons/react";
 import { storage } from "@wxt-dev/storage";
+import logo from "@/assets/logo.png";
 
 function App() {
   const openSidePanel = async (feature: string) => {
@@ -31,7 +32,7 @@ function App() {
   return (
     <div className="w-60 p-3 space-y-2 bg-background rounded-md shadow-md font-manrope">
       <div className="text-center mb-3">
-        <h1 className="text-lg font-bold text-foreground mb-1">🐱 Tabby</h1>
+        <h1 className="text-lg font-bold text-foreground mb-1"><><img src={logo} alt="Tabby Logo" className="inline-block w-6 h-6 mr-1" /> Tabby</></h1>
         <p className="text-xs text-muted-foreground">Smart Browser Assistant</p>
       </div>
 
@@ -41,7 +42,7 @@ function App() {
           className="w-full h-8 flex items-center gap-2 text-left justify-start text-sm"
           variant="outline"
         >
-          <ShoppingBag className="w-4 h-4" />
+          <ShoppingBagOpenIcon className="w-4 h-4" />
           <div>
             <div className="font-medium text-xs">Smart Shopping</div>
           </div>
@@ -52,7 +53,7 @@ function App() {
           className="w-full h-8 flex items-center gap-2 text-left justify-start text-sm"
           variant="outline"
         >
-          <Brain className="w-4 h-4" />
+          <HeadCircuitIcon className="w-4 h-4" />
           <div>
             <div className="font-medium text-xs">AI Search History</div>
           </div>
@@ -63,7 +64,7 @@ function App() {
           className="w-full h-8 flex items-center gap-2 text-left justify-start text-sm"
           variant="outline"
         >
-          <BarChart3 className="w-4 h-4" />
+          <ChartPieSliceIcon className="w-4 h-4" />
           <div>
             <div className="font-medium text-xs">Weekly Stats</div>
           </div>

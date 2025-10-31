@@ -21,6 +21,7 @@ import { analyzeWeeklyHistory, type HistoryAnalysis } from "@/components/functio
 import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
 import { Clock, TrendingUp, Globe, Zap, Award } from "lucide-react";
+import { ClockIcon } from "@phosphor-icons/react";
 import { Separator } from "@/components/ui/separator";
 
 function formatTime(minutes: number): string {
@@ -234,9 +235,9 @@ export function BrowsingHistoryChart() {
           {categoryStats.slice(0, 4).map((stat) => (
             <div key={stat.category} className="space-y-1">
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
+                <div className="flex items-center gap-2.5 flex-1 min-w-0">
                   <div
-                    className="w-3 h-3 rounded-sm shrink-0"
+                    className="w-2 h-2 rounded-full shrink-0 shadow-sm"
                     style={{ backgroundColor: stat.fill }}
                   />
                   <span className="font-medium text-sm">{stat.label}</span>

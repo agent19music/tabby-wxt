@@ -8,19 +8,15 @@ export const SidebarHeaderMain = () => {
   const tabs = ["Current Product", "Past Products"];
 
   return (
-    <div className="flex items-center justify-between px-4 py-3  bg-card m-2 rounded-md backdrop-blur-3xl">
-      {/* <h1 className="text-lg font-semibold text-foreground">Shopping</h1> */}
-      <img src={logo} className=" h-8" />
+    <div className="flex items-center justify-between px-5 py-3.5 bg-card mx-3 mt-3 mb-2 rounded-2xl backdrop-blur-sm border border-border/50">
+      <img src={logo} className="h-7" />
 
-      <div className="flex items-center gap-2 text-foreground/70">
-        <button
-          // size="icon"
-          className=" hover:bg-muted"
-        >
-          <GearSixIcon size={48} className="w-5 h-5 " />
+      <div className="flex items-center gap-1.5 text-foreground/60">
+        <button className="p-2 hover:bg-foreground/5 rounded-xl transition-all duration-200">
+          <GearSixIcon size={18} className="w-[18px] h-[18px]" />
         </button>
-        <button>
-          <XIcon className="w-5 h-5" />
+        <button className="p-2 hover:bg-foreground/5 rounded-xl transition-all duration-200" onClick={handleClose}>
+          <XIcon className="w-[18px] h-[18px]" />
         </button>
       </div>
     </div>

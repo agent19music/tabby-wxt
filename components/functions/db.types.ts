@@ -190,6 +190,7 @@ export interface TabbyStorage {
   products: Record<string, Product>; // productId -> Product
   product_history: ProductHistory[]; // Flat array, sorted by timestamp
   site_visits: SiteVisit[]; // Flat array, sorted by timestamp
+  youtube_reviews: YoutubeReview[]; // Flat array, sorted by watched_at
   
   // Site metadata cache
   site_metas: Record<string, SiteMeta>; // domain -> SiteMeta
@@ -232,6 +233,60 @@ export interface SearchResult {
   relevance_score: number; // 0-100, AI-generated relevance to query
 }
 
+// YouTube Review - Product reviews from YouTube videos
+export interface YoutubeReview {
+  id: string; // UUID
+  video_id: string; // YouTube video ID (e.g., "dQw4w9WgXcQ")
+  video_title: string;
+  video_url: string;
+  channel_name: string;
+  thumbnail_url: string;
+  
+  // Review type
+  review_type: "single_review" | "versus" | "roundup";
+  
+  // Single product info (for single_review type)
+  product_name?: string;
+  product_category?: string;
+  
+  // Review analysis (for single_review type)
+  review_summary?: string;
+  pros?: string[];
+  cons?: string[];
+  overall_sentiment?: "positive" | "neutral" | "negative";
+  
+  // Multiple products (for versus/roundup types)
+  products?: Array<{
+    product_name: string;
+    product_category: string;
+    rank?: number; // 1-based rank for roundups (1 = best)
+    pros: string[];
+    cons: string[];
+    verdict?: string; // "Winner", "Best Value", "Runner-up", etc.
+    price_mentioned?: string;
+    sentiment?: "positive" | "neutral" | "negative";
+  }>;
+  
+  // Comparison info (for versus/roundup types)
+  comparison_summary?: string; // Overall comparison summary
+  winner?: string; // Winner product name for versus videos
+  
+  // Affiliate links from description (filtered for relevance)
+  affiliate_links: Array<{
+    url: string;
+    retailer: string; // "Amazon", "BestBuy", etc.
+    extracted_product?: string; // Product name extracted from URL
+    relevance_score: number; // 0-100 relevance score
+    is_spam: boolean; // Whether this link was marked as spam
+    match_reason?: string; // Why this link was kept/filtered
+    matched_product?: string; // Which product this link is for (in comparisons)
+  }>;
+  
+  // Metadata
+  watched_at: number;
+  first_seen: number;
+}
+
 // Storage keys for chrome.storage.local
 export const STORAGE_KEYS = {
   PRODUCTS: "products",
@@ -240,12 +295,14 @@ export const STORAGE_KEYS = {
   SITE_METAS: "site_metas",
   URL_TO_PRODUCT: "url_to_product",
   CANONICAL_INDEX: "canonical_index",
+  YOUTUBE_REVIEWS: "youtube_reviews",
 } as const;
 
 // Storage limits
 export const STORAGE_LIMITS = {
   MAX_PRODUCT_HISTORY: 1000, // Keep last 1000 product visits
   MAX_SITE_VISITS: 500, // Keep last 500 site visits
+  MAX_YOUTUBE_REVIEWS: 100, // Keep last 100 YouTube reviews
   MAX_SEARCH_RESULTS: 10, // Return top 10 search results
   RECENT_VISITS_FOR_SEARCH: 100, // Search only last 100 visits
   SITE_META_CACHE_DAYS: 90, // Re-categorize sites after 90 days

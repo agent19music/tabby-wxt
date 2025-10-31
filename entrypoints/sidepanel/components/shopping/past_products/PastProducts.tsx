@@ -26,12 +26,12 @@ export default function PastProducts() {
         className="w-full h-full flex flex-col"
       >
         <div className="px-4">
-          <TabsList className="w-full border border-foreground/5 bg-card h-auto rounded-full backdrop-blur-3xl p-1 ">
+          <TabsList className="w-full border border-border/50 bg-card h-auto rounded-full backdrop-blur-sm p-1 shadow-sm">
             {tabs.map((tab) => (
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="flex-1 shadow-none py-2 text-sm font-medium text-muted-foreground rounded-full data-[state=active]:bg-foreground/5"
+                className="flex-1 shadow-none py-2 text-sm font-medium text-muted-foreground rounded-full data-[state=active]:bg-foreground/8 transition-all duration-200"
               >
                 {tab.label}
               </TabsTrigger>

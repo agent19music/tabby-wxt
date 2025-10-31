@@ -66,7 +66,7 @@ export const SearchFilterHeader: React.FC<{
           placeholder="Search past products..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="bg-card border-foreground/5 border h-12 px-4 w-full rounded-2xl backdrop-blur-sm focus:border-foreground/10 transition-all duration-200 outline-none"
+          className="bg-card border-border/50 border h-12 px-4 w-full rounded-2xl backdrop-blur-sm focus:border-border transition-all duration-200 outline-none shadow-sm"
         />
       </div>
     </div>
@@ -91,7 +91,7 @@ export const CategoryItem: React.FC<{
           <motion.div
             whileHover={{ scale: 1.005 }}
             whileTap={{ scale: 0.998 }}
-            className="flex items-center justify-between p-4 bg-card rounded-2xl border border-foreground/5 hover:border-foreground/10 backdrop-blur-sm transition-all duration-200 cursor-pointer"
+            className="flex items-center justify-between p-4 bg-card rounded-2xl border border-border/50 hover:border-border backdrop-blur-sm transition-all duration-200 cursor-pointer shadow-sm"
           >
             <div className="flex items-center gap-3">
               <ChevronRightIcon
@@ -175,7 +175,7 @@ export const SubcategoryItem: React.FC<{
           <motion.div
             whileHover={{ scale: 1.005 }}
             whileTap={{ scale: 0.998 }}
-            className="flex items-center justify-between p-3 bg-card rounded-xl border border-foreground/5 hover:border-foreground/10 backdrop-blur-sm transition-all duration-200 cursor-pointer"
+            className="flex items-center justify-between p-3 bg-card rounded-xl border border-border/50 hover:border-border backdrop-blur-sm transition-all duration-200 cursor-pointer shadow-sm"
           >
             <div className="flex items-center gap-2">
               <ChevronRightIcon
@@ -265,7 +265,7 @@ export const ProductItem: React.FC<{ product: Product }> = ({ product }) => {
   return (
     <motion.div
       whileHover={{ scale: 1.005 }}
-      className="ml-12 p-4 bg-card rounded-2xl border border-foreground/5 hover:border-foreground/10 backdrop-blur-sm transition-all duration-200"
+      className="ml-12 p-4 bg-card rounded-2xl border border-border/50 hover:border-border backdrop-blur-sm transition-all duration-200 shadow-sm"
     >
       <div className="flex items-start gap-3 w-full">
         <div className="relative shrink-0">
@@ -276,7 +276,7 @@ export const ProductItem: React.FC<{ product: Product }> = ({ product }) => {
               className="w-12 h-12 rounded-lg object-cover"
             />
           ) : (
-            <div className="w-12 h-12 rounded-lg bg-foreground/5 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-foreground/5 flex items-center justify-center border border-border/30">
               <TagIcon className="w-6 h-6 text-foreground/30" />
             </div>
           )}

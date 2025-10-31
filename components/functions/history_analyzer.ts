@@ -34,39 +34,51 @@ export interface HistoryAnalysis {
   mostProductiveCategory: string;
 }
 
+export interface WeekComparison {
+  currentWeek: HistoryAnalysis;
+  previousWeek: HistoryAnalysis;
+  changes: {
+    timeSpentChange: number; // percentage
+    visitsChange: number; // percentage
+    productivityChange: number; // percentage
+    topGrowingCategory: string;
+    topDecliningCategory: string;
+  };
+}
+
 const CATEGORY_COLORS: Record<SiteCategory, string> = {
-  [SiteCategory.ECOMMERCE]: "#f59e0b", // Blue
-  [SiteCategory.MARKETPLACE]: "#60a5fa", // Light Blue
-  [SiteCategory.VIDEO]: "#ef4444", // Red
-  [SiteCategory.STREAMING]: "#f87171", // Light Red
-  [SiteCategory.SOCIAL_MEDIA]: "#a855f7", // Purple
-  [SiteCategory.DEVELOPMENT]: "#10b981", // Green
-  [SiteCategory.DOCUMENTATION]: "#34d399", // Light Green
-  [SiteCategory.NEWS]: "#f59e0b", // Orange
-  [SiteCategory.BLOG]: "#fbbf24", // Light Orange
-  [SiteCategory.SEARCH_ENGINE]: "#06b6d4", // Cyan
-  [SiteCategory.PRODUCTIVITY]: "#14b8a6", // Teal
-  [SiteCategory.EDUCATION]: "#8b5cf6", // Violet
-  [SiteCategory.GAMING]: "#ec4899", // Pink
-  [SiteCategory.EMAIL]: "#6366f1", // Indigo
-  [SiteCategory.MESSAGING]: "#818cf8", // Light Indigo
-  [SiteCategory.FORUM]: "#f97316", // Deep Orange
-  [SiteCategory.MUSIC]: "#d946ef", // Fuchsia
-  [SiteCategory.PODCAST]: "#c026d3", // Magenta
-  [SiteCategory.DESIGN]: "#06b6d4", // Cyan
-  [SiteCategory.BUSINESS]: "#0ea5e9", // Sky Blue
-  [SiteCategory.RESEARCH]: "#22c55e", // Lime Green
-  [SiteCategory.WIKI]: "#84cc16", // Lime
-  [SiteCategory.SPORTS]: "#eab308", // Yellow
-  [SiteCategory.NSFW]: "#dc2626", // Dark Red
-  [SiteCategory.GAMBLING]: "#be123c", // Rose
-  [SiteCategory.FINANCE]: "#059669", // Emerald
-  [SiteCategory.HEALTH]: "#16a34a", // Green
-  [SiteCategory.TRAVEL]: "#0284c7", // Light Blue
-  [SiteCategory.FOOD]: "#ea580c", // Orange Red
-  [SiteCategory.WEATHER]: "#0891b2", // Cyan Blue
-  [SiteCategory.GOVERNMENT]: "#4f46e5", // Indigo
-  [SiteCategory.UNKNOWN]: "#9ca3af", // Gray
+  [SiteCategory.NEWS]: "#0a84ff",
+  [SiteCategory.BLOG]: "#5e5ce6",
+  [SiteCategory.SOCIAL_MEDIA]: "#bf5af2",
+  [SiteCategory.VIDEO]: "#ff375f",
+  [SiteCategory.MUSIC]: "#ff9f0a",
+  [SiteCategory.PODCAST]: "#ac8e68",
+  [SiteCategory.ECOMMERCE]: "#30d158",
+  [SiteCategory.MARKETPLACE]: "#32d74b",
+  [SiteCategory.PRODUCTIVITY]: "#64d2ff",
+  [SiteCategory.DEVELOPMENT]: "#5ac8fa",
+  [SiteCategory.DESIGN]: "#af52de",
+  [SiteCategory.BUSINESS]: "#ffd60a",
+  [SiteCategory.EDUCATION]: "#0a84ff",
+  [SiteCategory.DOCUMENTATION]: "#30d158",
+  [SiteCategory.RESEARCH]: "#5e5ce6",
+  [SiteCategory.WIKI]: "#64d2ff",
+  [SiteCategory.GAMING]: "#ff453a",
+  [SiteCategory.STREAMING]: "#ff375f",
+  [SiteCategory.SPORTS]: "#ff9f0a",
+  [SiteCategory.EMAIL]: "#0a84ff",
+  [SiteCategory.MESSAGING]: "#30d158",
+  [SiteCategory.FORUM]: "#5ac8fa",
+  [SiteCategory.NSFW]: "#ff3b30",
+  [SiteCategory.GAMBLING]: "#ff453a",
+  [SiteCategory.SEARCH_ENGINE]: "#aeaeb2",
+  [SiteCategory.FINANCE]: "#30d158",
+  [SiteCategory.HEALTH]: "#ff375f",
+  [SiteCategory.TRAVEL]: "#64d2ff",
+  [SiteCategory.FOOD]: "#ff9f0a",
+  [SiteCategory.WEATHER]: "#5ac8fa",
+  [SiteCategory.GOVERNMENT]: "#aeaeb2",
+  [SiteCategory.UNKNOWN]: "#48484a",
 };
 
 const CATEGORY_LABELS: Record<SiteCategory, string> = {
@@ -134,15 +146,15 @@ async function getCategoryForDomain(domain: string, url: string): Promise<SiteCa
   return meta.category;
 }
 
-export async function analyzeWeeklyHistory(): Promise<HistoryAnalysis> {
-  console.log("[History Analyzer] Starting weekly history analysis");
+async function analyzeHistoryForPeriod(startTime: number, endTime: number): Promise<HistoryAnalysis> {
+  console.log(`[History Analyzer] Analyzing history from ${new Date(startTime).toISOString()} to ${new Date(endTime).toISOString()}`);
   
-  // Get history from the past week
-  const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const periodDays = (endTime - startTime) / (24 * 60 * 60 * 1000);
   
   const historyItems = await chrome.history.search({
     text: "",
-    startTime: oneWeekAgo,
+    startTime: startTime,
+    endTime: endTime,
     maxResults: 10000,
   });
   
@@ -282,4 +294,76 @@ export async function analyzeWeeklyHistory(): Promise<HistoryAnalysis> {
   console.log("[History Analyzer] Analysis complete:", analysis);
   
   return analysis;
+}
+
+export async function analyzeWeeklyHistory(): Promise<HistoryAnalysis> {
+  const now = Date.now();
+  const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
+  return analyzeHistoryForPeriod(oneWeekAgo, now);
+}
+
+export async function compareWeeks(): Promise<WeekComparison> {
+  console.log("[History Analyzer] Starting week-over-week comparison");
+  
+  const now = Date.now();
+  const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
+  const twoWeeksAgo = now - 14 * 24 * 60 * 60 * 1000;
+  
+  const [currentWeek, previousWeek] = await Promise.all([
+    analyzeHistoryForPeriod(oneWeekAgo, now),
+    analyzeHistoryForPeriod(twoWeeksAgo, oneWeekAgo),
+  ]);
+  
+  // Calculate changes
+  const timeSpentChange = previousWeek.totalTimeSpent > 0
+    ? ((currentWeek.totalTimeSpent - previousWeek.totalTimeSpent) / previousWeek.totalTimeSpent) * 100
+    : 0;
+  
+  const visitsChange = previousWeek.totalVisits > 0
+    ? ((currentWeek.totalVisits - previousWeek.totalVisits) / previousWeek.totalVisits) * 100
+    : 0;
+  
+  // Calculate productivity change
+  const productiveCategories = ["Development", "Productivity", "Education", "Documentation", "Research"];
+  
+  const currentProductiveTime = currentWeek.categoryStats
+    .filter(s => productiveCategories.includes(s.label))
+    .reduce((sum, s) => sum + s.timeSpent, 0);
+  const currentProductivity = currentWeek.totalTimeSpent > 0 ? (currentProductiveTime / currentWeek.totalTimeSpent) * 100 : 0;
+  
+  const previousProductiveTime = previousWeek.categoryStats
+    .filter(s => productiveCategories.includes(s.label))
+    .reduce((sum, s) => sum + s.timeSpent, 0);
+  const previousProductivity = previousWeek.totalTimeSpent > 0 ? (previousProductiveTime / previousWeek.totalTimeSpent) * 100 : 0;
+  
+  const productivityChange = currentProductivity - previousProductivity;
+  
+  // Find top growing and declining categories
+  const categoryChanges = new Map<string, number>();
+  
+  currentWeek.categoryStats.forEach(current => {
+    const previous = previousWeek.categoryStats.find(p => p.category === current.category);
+    if (previous && previous.timeSpent > 0) {
+      const change = ((current.timeSpent - previous.timeSpent) / previous.timeSpent) * 100;
+      categoryChanges.set(current.label, change);
+    } else if (!previous && current.timeSpent > 0) {
+      categoryChanges.set(current.label, 100); // New category
+    }
+  });
+  
+  const sortedChanges = Array.from(categoryChanges.entries()).sort((a, b) => b[1] - a[1]);
+  const topGrowingCategory = sortedChanges[0]?.[0] || "None";
+  const topDecliningCategory = sortedChanges[sortedChanges.length - 1]?.[0] || "None";
+  
+  return {
+    currentWeek,
+    previousWeek,
+    changes: {
+      timeSpentChange,
+      visitsChange,
+      productivityChange,
+      topGrowingCategory,
+      topDecliningCategory,
+    },
+  };
 }

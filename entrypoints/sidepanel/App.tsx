@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import ShoppingPanel from "./components/ShoppingPanel";
 import SearchPanel from "./components/SearchPanel";
 import { storage } from "@wxt-dev/storage";
-import { BrowsingHistoryChart } from "./components/BrowsingHistoryChart";
+import { EnhancedBrowsingStats } from "./components/EnhancedBrowsingStats";
 type Feature = "shopping" | "search" | "stats";
 
 function App() {
@@ -29,12 +29,12 @@ function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background font-manrope">
+    <div className="min-h-screen bg-background font-roboto antialiased">
       {activeFeature === "shopping" && <ShoppingPanel />}
       {activeFeature === "search" && <SearchPanel />}
       {activeFeature === "stats" && (
         <div className="p-4">
-          <BrowsingHistoryChart />
+          <EnhancedBrowsingStats />
         </div>
       )}
     </div>

@@ -178,12 +178,12 @@ export const ProductInsightsTabs: React.FC<ProductInsightsTabsProps> = ({
 
   return (
     <Tabs defaultValue="insights" className="w-full">
-      <TabsList className="grid w-full grid-cols-2 bg-card border border-foreground/5 p-1 h-[50px] rounded-full">
+      <TabsList className="grid w-full grid-cols-2 bg-card border border-border/50 p-1 h-[50px] rounded-full shadow-sm">
         {tabs.map((tab) => (
           <TabsTrigger
             key={tab.value}
             value={tab.value}
-            className="text-xs data-[state=active]:bg-foreground/5 rounded-full"
+            className="text-xs data-[state=active]:bg-foreground/8 rounded-full transition-all duration-200"
           >
             {tab.icon} {tab.label}
           </TabsTrigger>
