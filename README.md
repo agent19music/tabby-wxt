@@ -1,230 +1,173 @@
----
-name: React with Tailwind & shadcn
-description: Simple example extension using React, Tailwind CSS, and shadcn UI components.
----
+# 🐱 Tabby - Smart Browser Assistant
 
-# WXT + React + Tailwind + Shadcn
+A Chrome extension that transforms your browsing experience with AI-powered insights, smart shopping assistance, and intelligent habit tracking.
 
-This example demonstrates how to integrate React 19+, Tailwind CSS v4+, and shadcn UI components within a WXT extension.
+## 🎯 Problem We're Solving
 
-## Installation Walkthrough
+Modern web browsing generates tons of data, but users struggle to:
 
-1. **Initialize a new WXT project:**
+- Understand their browsing habits and maintain focus
+- Rediscover content they viewed weeks ago
+- Make informed shopping decisions across multiple sites
+- Get meaningful insights from their digital behavior
 
-   Open your terminal and run the following command to create a new WXT project with the React template:
+Tabby solves these problems by turning your browsing data into actionable intelligence.
 
-   ```sh
-   pnpm dlx wxt@latest init
-   ```
+## ✨ Core Features
 
-   The CLI will guide you through the project setup. Choose the `react` template and your preferred package manager. For this example, I use pnpm.
+### 1. 📊 Weekly & Daily Stats
 
-   ```
-   WXT 0.20.6
-   ℹ Initializing new project
-   ✔ Project Directory … react-shadcn
-   ✔ Choose a template › react
-   ✔ Package Manager › pnpm
-   ✔ Downloading template
-   ✨ WXT project created with the react template.
-   Next steps:
-     1. cd react-shadcn
-     2. pnpm install
-   ```
+**Goal**: Help users understand their browsing habits and maintain balance between focus and leisure.
 
-2. **Navigate to the project directory and install dependencies:**
+- **Time Tracking**: Automatically categorizes time spent on Work, Study, Shopping, Entertainment, etc.
+- **Weekly Summaries**: Shows most visited sites and top activities with insights like "You spent 5 hours researching design tools"
+- **Focus Goals**: Set personal goals and get gentle reminders when off-track
+- **Habit Insights**: Track patterns like "You switched from Study mode to social media 3 times today"
 
-   ```sh
-   cd react-shadcn
-   pnpm install
-   ```
+### 2. 🧠 AI Search History
 
-3. **Install Tailwind CSS and `@tailwindcss/vite`:**
+**Goal**: Make it easy to rediscover past content using natural language or image-based recall.
 
-   You should follow the official Tailwind Vite installation [guide](https://tailwindcss.com/docs/installation/using-vite). As the time of creating this example, it asked to run the following command:
+- **Natural Language Search**: Find content with queries like "Show me the Dribbble design with a pink dashboard" or "Find that fridge I saw last night"
+- **Visual Recall**: AI recognizes and describes images from past pages
+- **Smart Summarization**: Auto-tags and summarizes visited pages
+- **Topic Grouping**: Organizes content by themes (design tools, productivity, electronics)
 
-   ```sh
-   pnpm install tailwindcss @tailwindcss/vite
-   ```
+### 3. 🛒 Smart Shopping Assistant
 
-4. **Configure Tailwind CSS in `wxt.config.ts`:**
+**Goal**: Enhance online shopping with intelligent comparisons, insights, and recommendations.
 
-    To configure Tailwind CSS, modify `wxt.config.ts`. While official documentation says to change `vite.config.ts`, WXT configures Vite internally, so you need to update `wxt.config.ts` instead. This file manages the build process. To integrate Tailwind, add it as a Vite plugin within the wxt.config.ts file, as shown here:
+- **Product Detection**: Automatically identifies product details (name, specs, price) on shopping sites
+- **Cross-Site Comparison**: Compares items viewed across multiple retailers
+- **Plain Language Explanations**: Simplifies complex product descriptions
+- **Smart Recommendations**: Suggests better or similar products from your browsing history
+- **Price Tracking**: Monitors price changes for products you've viewed
 
-   ```ts
-   import { defineConfig } from "wxt";
-   import tailwindcss from "@tailwindcss/vite";
-   // See https://wxt.dev/api/config.html
-   export default defineConfig({
-     modules: ["@wxt-dev/module-react"],
-     vite: () => ({
-       plugins: [tailwindcss()],
-     }),
-   });
-   ```
+## 🏗️ Technical Architecture
 
-5. **Create a `tailwind.css` file:**
+### Frontend
 
-   Create a `tailwind.css` file in your `assets` directory (or the root directory of your project if you don't have an assets dir) with the following content:
+- **React 19** with TypeScript
+- **Tailwind CSS** for styling
+- **WXT Framework** for Chrome extension development
+- **Radix UI** for accessible components
 
-   ```css
-   @import "tailwindcss";
-   ```
+### Browser APIs
 
-6. **Import `tailwind.css`:**
+- **Chrome Side Panel API** for expanded interface
+- **Chrome Storage API** for data persistence
+- **Chrome History API** for browsing data
+- **Chrome Tabs API** for active tab monitoring
 
-   You can now easily import the `tailwind.css` file in your React components:
+### AI Integration
 
-   ```ts
-   import "@/assets/tailwind.css"; // Adjust the path if necessary
-   ```
+- **Gemini API** for natural language processing and content analysis
+- **Nano API** for product information and comparisons
+- **Local ML** for privacy-focused content categorization
 
-   or you can include it directly in your `index.html` file:
+## 🚀 Getting Started
 
-   ```html
-   <!doctype html>
-   <html>
-     <head>
-       <meta charset="UTF-8" />
-       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-       <link href="@/assets/tailwind.css" rel="stylesheet" />
-     </head>
-     <body></body>
-   </html>
-   ```
+### Prerequisites
 
-   Now you can start styling your components with Tailwind CSS classes.
+- Node.js 18+
+- Chrome Browser (for development)
 
-7. **Install and Configure Shadcn UI:**
+### Installation
 
-   Integrating Shadcn UI requires a few extra steps. You can choose either the [manual installation](https://ui.shadcn.com/docs/installation/manual) or the [Vite installation](https://ui.shadcn.com/docs/installation/vite) method. Both of them have workarounds we need to do, however this guide will use the Vite installation method.
+```bash
+# Clone the repository
+git clone <repository-url>
+cd tabby-wxt
 
-   You also need to decide whether to stick with WXT's default project structure or introduce a `src/` directory to separate source code from configuration files. WXT provides documentation on adding a `src/` directory [here](https://wxt.dev/guide/essentials/project-structure.html#adding-a-src-directory). This guide will continue without a `src/` directory for simplicity.
+# Install dependencies
+npm install
 
-8. **Configure `tsconfig.json`:**
+# Start development server
+npm run dev
 
-   Before installing Shadcn UI components, you need to configure your `tsconfig.json` file. Add the following within the `compilerOptions` section:
+# Build for production
+npm run build
 
-   ```json
-     "compilerOptions": {
-       "baseUrl": ".",
-       "paths": {
-         "@/*": ["./*"] // or "./src/*" if using src directory
-       }
-     }
-   ```
-
-9. **Configure `wxt.config.ts` for Alias Resolution:**
-
-   Update your `wxt.config.ts` to include an alias for resolving paths. Make sure to install `@types/node` for the `path` module: `pnpm add -D @types/node`
-
-   ```ts
-   import { defineConfig } from "wxt";
-   import tailwindcss from "@tailwindcss/vite";
-   import path from "path";
-
-   // See https://wxt.dev/api/config.html
-   export default defineConfig({
-     modules: ["@wxt-dev/module-react"],
-     vite: () => ({
-       plugins: [tailwindcss()],
-       resolve: {
-         alias: {
-           "@": path.resolve(__dirname, "./"), // or "./src" if using src directory
-         },
-       },
-     }),
-   });
-   ```
-
-10. **Temporarily Add `vite.config.ts` (Workaround for Shadcn CLI):**
-
-    The Shadcn CLI relies on detecting a `vite.config.ts` file to identify which framework to use. So before initializing the tool, we have to temporarily create a `vite.config.ts` file with the following content:
-
-    ```ts
-    import path from "path";
-    import react from "@vitejs/plugin-react";
-    import { defineConfig } from "vite";
-    import tailwindcss from "@tailwindcss/vite";
-    export default defineConfig({
-      plugins: [react(), tailwindcss()],
-      resolve: {
-        alias: {
-          "@": path.resolve(__dirname, "./"), // or "./src" if using src directory
-        },
-      },
-    });
-    ```
-
-    This file ensures that the Shadcn CLI correctly identifies your project as a Vite project and configures the alias. **This file should be deleted after the initialization.**
-
-11. **Initialize Shadcn UI:**
-
-    Run the Shadcn UI initialization command:
-
-    ```sh
-    pnpm dlx shadcn-ui@latest init
-    ```
-
-    Answer the prompts in the CLI to configure Shadcn UI according to your preferences (color scheme, etc.).
-
-12. **Delete Temporary `vite.config.ts`:**
-
-    After Shadcn UI is initialized, you can safely delete the temporary `vite.config.ts` file you created in step 10.
-
-13. **Add Shadcn UI Components:**
-
-    You can now add Shadcn UI components using the CLI:
-
-    ```sh
-    pnpm dlx shadcn-ui@latest add button
-    ```
-
-    This will install the button component and its dependencies. Repeat this command for any other components you wish to use.
-
-## Notes
-
-There are some potential conflicts with WXT's recommended configuration and best practices in this setup, particularly in `wxt.config.ts` and `tsconfig.json`.
-
-WXT advises against directly adding paths to `tsconfig.json` and prefers using the `alias` option in `wxt.config.ts` (see [WXT documentation](https://wxt.dev/guide/essentials/config/typescript.html#tsconfig-paths)). However, Shadcn currently fails to resolve paths correctly if they are only defined in `wxt.config.ts`. There is an [open issue](https://github.com/shadcn-ui/ui/issues/6020) about this in the Shadcn UI repository.
-
-**Therefore, the current approach of modifying both `tsconfig.json` and `wxt.config.ts` is a temporary workaround.**
-
-Ideally, the configuration should look like this:
-
-```diff
-// tsconfig.ts
-{
-  "extends": "./.wxt/tsconfig.json",
-  "compilerOptions": {
-    "allowImportingTsExtensions": true,
-    "jsx": "react-jsx",
--    "baseUrl": ".",
--    "paths": {
--      "@/*": ["./*"]
--    }
-  }
-}
+# Create extension zip
+npm run zip
 ```
 
-```diff
-// wxt.config.ts
-export default defineConfig({
-  modules: ["@wxt-dev/module-react"],
-+  alias: {
-+    "@": path.resolve(__dirname, "./"),
-+  },
-  vite: () => ({
-    plugins: [tailwindcss()],
--    resolve: {
--      alias: {
--        "@": path.resolve(__dirname, "./"),
--      },
--    },
-  }),
-});
-```
+### Development
 
-However, this will not work correctly with Shadcn UI until the linked issue is resolved. Remember to monitor the linked issue in the Shadcn UI repository and update your configuration when a fix is available.
+1. Run `npm run dev` to start the development server
+2. Open Chrome and navigate to `chrome://extensions/`
+3. Enable "Developer mode"
+4. Click "Load unpacked" and select the `.output/chrome-mv3` folder
 
-For a more in-depth guide that goes through the manual installation process, please check this [detailed guide](https://aabidk.dev/tags/wxt/).
+## 📁 Project Structure
+
+## 🎨 User Experience
+
+### Main Interface
+
+- **Popup**: Quick access with three main buttons (Shopping, AI Search, Stats)
+- **Side Panel**: Expanded interface for detailed interactions
+
+### Shopping Flow
+
+1. **Current Product Tab**: Analyzes the current product page, shows related items from your history
+2. **Past Products Tab**: Displays grouped categories of previously viewed items
+3. **Comparisons**: Side-by-side product comparisons with AI insights
+
+### AI Search Flow
+
+1. **Natural Language Input**: Type what you remember about the content
+2. **Smart Results**: AI matches your description to browsing history
+3. **Visual Context**: Shows page screenshots and content summaries
+
+### Stats Dashboard
+
+1. **Daily Overview**: Today's browsing breakdown by category
+2. **Weekly Trends**: Patterns and insights over the past week
+3. **Focus Metrics**: Time in productive vs. leisure activities
+
+## 🔒 Privacy & Data
+
+- **Local Storage**: All browsing data stays on your device
+- **No Tracking**: We don't collect or transmit personal browsing data
+- **API Calls**: Only product details and content summaries are sent to AI services
+- **User Control**: Complete control over data retention and deletion
+
+## 🛣️ Roadmap
+
+### Phase 1 (Current)
+
+- [x] Basic project setup
+- [ ] Three-button popup interface
+- [ ] Side panel framework
+- [ ] Basic shopping detection
+
+### Phase 2
+
+- [ ] AI search history implementation
+- [ ] Weekly stats dashboard
+- [ ] Product comparison engine
+
+### Phase 3
+
+- [ ] Advanced AI insights
+- [ ] Cross-browser compatibility
+- [ ] Export/import functionality
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our contributing guidelines for details.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Acknowledgments
+
+- Built with [WXT Framework](https://wxt.dev/)
+- UI components from [Radix UI](https://www.radix-ui.com/)
+- Icons from [Lucide React](https://lucide.dev/)
+
+---
+
+**Tabby** - Making your browsing smarter, one tab at a time 🐱

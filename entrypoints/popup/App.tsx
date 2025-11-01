@@ -1,58 +1,79 @@
-import { useState } from "react";
-import reactLogo from "@/assets/react.svg";
-import wxtLogo from "/wxt.svg";
 import { Button } from "@/components/ui/button";
-import { BarChart3 } from "lucide-react";
+import { ChartPieSliceIcon, ShoppingBagOpenIcon,HeadCircuitIcon } from "@phosphor-icons/react";
+import { storage } from "@wxt-dev/storage";
+import logo from "@/assets/logo.png";
 
 function App() {
-  const [count, setCount] = useState(0);
-
-  const openSidePanel = async () => {
+  const openSidePanel = async (feature: string) => {
     try {
-      const currentWindow = await chrome.windows.getCurrent();
-      // @ts-ignore - sidePanel API might not be in types yet
-      await chrome.sidePanel.open({ windowId: currentWindow.id });
+      // Store the selected feature using WXT storage
+      await storage.setItem("local:activeFeature", feature);
+      console.log("Feature stored using WXT storage");
+
+      // Check if chrome.sidePanel is available
+      if (!chrome?.sidePanel?.open) {
+        throw new Error(
+          "Chrome sidePanel API is not available. Make sure you are using Chrome 114+"
+        );
+      }
+
+      // Get current window and open side panel
+      const window = await chrome.windows.getCurrent();
+      console.log("Current window:", window);
+      //@ts-ignore
+      await chrome.sidePanel.open({ windowId: window.id });
+      console.log("Side panel opened successfully");
     } catch (error) {
       console.error("Error opening side panel:", error);
+      alert("Error opening side panel: " + error);
     }
   };
 
   return (
-    <div className="w-80 p-4 space-y-4 bg-white rounded-md shadow-md">
-      <div className="flex justify-center items-center space-x-4">
-        <a href="https://wxt.dev" target="_blank" rel="noopener noreferrer">
-          <img src={wxtLogo} className="h-8 w-auto" alt="WXT logo" />
-        </a>
-        <a href="https://react.dev" target="_blank" rel="noopener noreferrer">
-          <img src={reactLogo} className="h-8 w-auto" alt="React logo" />
-        </a>
+    <div className="w-60 p-3 space-y-2 bg-background rounded-md shadow-md font-manrope">
+      <div className="text-center mb-3">
+        <h1 className="text-lg font-bold text-foreground mb-1"><><img src={logo} alt="Tabby Logo" className="inline-block w-6 h-6 mr-1" /> Tabby</></h1>
+        <p className="text-xs text-muted-foreground">Smart Browser Assistant</p>
       </div>
 
-      <h1 className="text-xl font-semibold text-center text-gray-800">
-        WXT + React
-      </h1>
-
-      <div className="bg-gray-100 p-4 rounded-md shadow-inner flex flex-col items-center space-y-3">
-        <Button onClick={() => setCount((count) => count + 1)}>
-          Count is {count}
+      <div className="space-y-2">
+        <Button
+          onClick={() => openSidePanel("shopping")}
+          className="w-full h-8 flex items-center gap-2 text-left justify-start text-sm"
+          variant="outline"
+        >
+          <ShoppingBagOpenIcon className="w-4 h-4" />
+          <div>
+            <div className="font-medium text-xs">Smart Shopping</div>
+          </div>
         </Button>
-        <p className="text-sm text-gray-600 text-center">
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+
+        <Button
+          onClick={() => openSidePanel("search")}
+          className="w-full h-8 flex items-center gap-2 text-left justify-start text-sm"
+          variant="outline"
+        >
+          <HeadCircuitIcon className="w-4 h-4" />
+          <div>
+            <div className="font-medium text-xs">AI Search History</div>
+          </div>
+        </Button>
+
+        <Button
+          onClick={() => openSidePanel("stats")}
+          className="w-full h-8 flex items-center gap-2 text-left justify-start text-sm"
+          variant="outline"
+        >
+          <ChartPieSliceIcon className="w-4 h-4" />
+          <div>
+            <div className="font-medium text-xs">Weekly Stats</div>
+          </div>
+        </Button>
       </div>
 
-      <Button 
-        onClick={openSidePanel}
-        className="w-full"
-        variant="outline"
-      >
-        <BarChart3 className="w-4 h-4 mr-2" />
-        View Browsing Stats
-      </Button>
-
-      <p className="text-xs text-center text-gray-500">
-        Click on the WXT and React logos to learn more
-      </p>
+      <div className="text-center pt-2 border-t">
+        <p className="text-xs text-muted-foreground">Making browsing smarter</p>
+      </div>
     </div>
   );
 }
