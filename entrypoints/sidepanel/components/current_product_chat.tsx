@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { PaperPlaneTiltIcon, XCircleIcon, RobotIcon, UserCircleIcon } from "@phosphor-icons/react";
 import {
@@ -25,6 +25,8 @@ export const CurrentProductChat: React.FC<CurrentProductChatProps> = ({
   const [streamingMessage, setStreamingMessage] = useState("");
   const [sessionError, setSessionError] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
+  const messagesRef = useRef<HTMLDivElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   // Initialize chat session when product changes
   useEffect(() => {
@@ -75,6 +77,22 @@ export const CurrentProductChat: React.FC<CurrentProductChatProps> = ({
       // Session is destroyed only when switching products
     };
   }, [product.id]);
+
+  // Auto-scroll when messages, streaming content, or loading state changes
+  useEffect(() => {
+    try {
+      // Prefer scrolling the anchor into view to ensure the bottom is visible
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      } else if (messagesRef.current) {
+        messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
+      }
+    } catch (e) {
+      // Swallow any errors related to scrolling in non-DOM environments
+      // (e.g., during SSR) and continue silently.
+      // console.warn('Scrolling failed', e);
+    }
+  }, [messages, streamingMessage, isLoading, isInitializing]);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -141,7 +159,7 @@ export const CurrentProductChat: React.FC<CurrentProductChatProps> = ({
           <div className="text-center">
             <div className="inline-block w-8 h-8 border-2 border-foreground/20 border-t-foreground rounded-full animate-spin mb-2"></div>
             <p className="text-sm text-muted-foreground">
-              Initializing chat...
+              ...
             </p>
           </div>
         </div>
@@ -149,7 +167,7 @@ export const CurrentProductChat: React.FC<CurrentProductChatProps> = ({
 
       {/* Chat Messages Area - this grows upward in the scrollable container */}
       {!isInitializing && !sessionError && messages.length > 0 && (
-        <div className="mb-3">
+        <div ref={messagesRef} className="mb-3 max-h-[55vh] overflow-y-auto">
           {/* Messages */}
           <div className="space-y-3 mb-3">
             {messages.map((message) => (
@@ -227,6 +245,9 @@ export const CurrentProductChat: React.FC<CurrentProductChatProps> = ({
               </div>
             </div>
           )}
+
+          {/* Anchor to scroll into view */}
+          <div ref={messagesEndRef} />
         </div>
       )}
 

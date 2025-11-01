@@ -49,31 +49,31 @@ function YoutubeProductItem({ item }: { item: YoutubeReview }) {
         className="bg-card/30 border border-foreground/5 rounded-xl backdrop-blur-sm overflow-hidden"
       >
         <AccordionTrigger className="px-4 py-3 hover:no-underline [&[data-state=open]>div>.caret]:rotate-180">
-          <div className="flex items-start gap-3 w-full">
+          <div className="flex items-start gap-3 w-full min-w-0">
             <img 
               src={item.thumbnail_url} 
               alt={item.video_title}
               className="w-20 h-12 object-cover rounded-md flex-shrink-0"
             />
-            <div className="flex-1 min-w-0 text-left">
-              <div className="flex items-center gap-2 mb-1">
+            <div className="flex-1 min-w-0 text-left overflow-hidden">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <YoutubeLogo className="w-4 h-4 text-red-500 flex-shrink-0" weight="fill" />
-                <h4 className="text-sm font-semibold text-foreground truncate">
+                <h4 className="text-sm font-semibold text-foreground break-words line-clamp-2 flex-1 min-w-0">
                   {item.product_name}
                 </h4>
-                <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full border ${getSentimentColor(item.overall_sentiment)}`}>
+                <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full border flex-shrink-0 ${getSentimentColor(item.overall_sentiment)}`}>
                   {getSentimentIcon(item.overall_sentiment)}
                 </div>
               </div>
-              <p className="text-xs text-foreground/60 truncate">
+              <p className="text-xs text-foreground/60 break-words line-clamp-2">
                 {item.video_title}
               </p>
-              <div className="flex items-center gap-2 mt-1">
-                <p className="text-xs text-foreground/50">
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                <p className="text-xs text-foreground/50 truncate max-w-[120px]">
                   {item.channel_name}
                 </p>
                 <span className="text-xs text-foreground/30">•</span>
-                <p className="text-xs text-foreground/50">
+                <p className="text-xs text-foreground/50 whitespace-nowrap">
                   {new Date(item.watched_at).toLocaleDateString()}
                 </p>
               </div>

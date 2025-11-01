@@ -33,7 +33,7 @@ function App() {
     <div className="w-60 p-3 space-y-2 bg-background rounded-md shadow-md font-manrope">
       <div className="text-center mb-3">
         <h1 className="text-lg font-bold text-foreground mb-1"><><img src={logo} alt="Tabby Logo" className="inline-block w-6 h-6 mr-1" /> Tabby</></h1>
-        <p className="text-xs text-muted-foreground">Smart Browser Assistant</p>
+        <p className="text-xs text-muted-foreground">Your smart companion for browsing</p>
       </div>
 
       <div className="space-y-2">
@@ -72,7 +72,6 @@ function App() {
       </div>
 
       <div className="text-center pt-2 border-t">
-        <p className="text-xs text-muted-foreground">Making browsing smarter</p>
       </div>
     </div>
   );

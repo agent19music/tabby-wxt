@@ -135,18 +135,12 @@ export const CurrentProductCard = (props: Props) => {
         try {
           setIsLoadingRecommendations(true);
           
+          // Don't pass allProducts - let the function fetch them itself
           const result = await findRelatedProducts(
             currentProduct.id,
             currentProduct.title,
             currentProduct.category,
-            currentProduct.summary,
-            allProducts.map(p => ({
-              id: p.id,
-              title: p.title,
-              category: p.category,
-              summary: p.summary,
-              price: p.price,
-            }))
+            currentProduct.summary
           );
           
           setRecommendations(result);
@@ -535,6 +529,7 @@ export const CurrentProductCard = (props: Props) => {
                 price: p.price,
                 category: p.category,
               }))}
+              isLoadingRecommendations={isLoadingRecommendations}
             />
           </div>
 

@@ -5,6 +5,8 @@
  * Maintains context using initialPrompts and session history.
  */
 
+import { scanPageContent } from "../content_scanner";
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -39,47 +41,25 @@ export async function createProductChatSession(
   productId: string
 ): Promise<void> {
   try {
-    console.log('🔧 Creating session for product:', { productId, product });
-
-    // Access the Chrome AI API
-    const ai = (self as any).ai;
-    
-    if (!ai || !ai.languageModel) {
-      throw new Error('Chrome AI is not available. Please ensure you are using Chrome with Gemini Nano enabled.');
-    }
-
-    console.log('✅ Chrome AI is available');
-
-    // Check availability
-    const availability = await ai.languageModel.availability();
-    console.log('📊 Model availability:', availability);
-
-    if (availability === 'no') {
-      throw new Error('Language model is unavailable on this device. Your device may not meet the hardware requirements (need 22GB free space, 4GB+ VRAM or 16GB+ RAM).');
-    }
+   
+    const text=scanPageContent().content
 
     const productInfo = `
 Product: ${product.title}
 Category: ${product.category}
-${product.price ? `Price: ${product.price}` : ''}
-${product.summary ? `Summary: ${product.summary}` : ''}
-${product.pros && product.pros.length > 0 ? `\nPros:\n${product.pros.map(p => `- ${p}`).join('\n')}` : ''}
-${product.cons && product.cons.length > 0 ? `\nCons:\n${product.cons.map(c => `- ${c}`).join('\n')}` : ''}
-${product.features && product.features.length > 0 ? `\nFeatures: ${product.features.join(', ')}` : ''}
-URL: ${product.url}
+content:${text}
     `.trim();
 
-    console.log('🔄 Creating AI session...');
+const availability = await LanguageModel.availability();
 
-    // Create session with initial context
-    // If model needs downloading, this will trigger the download
-    const session = await ai.languageModel.create({
-      temperature: 0.7, // Slightly creative but still factual
-      topK: 40, // More variety in responses
+
+    const session = await  LanguageModel.create({
+      temperature: 0.7,
+      topK: 40,
       monitor(m: any) {
         m.addEventListener('downloadprogress', (e: any) => {
           console.log(`📥 Model downloading: ${Math.round(e.loaded * 100)}%`);
-          // You could emit this to UI to show download progress
+          
         });
       },
       initialPrompts: [
@@ -110,10 +90,7 @@ Always base your answers on the product information provided above.`
       productId
     };
 
-    console.log('✅ Product chat session created successfully');
-
   } catch (error) {
-    console.error('❌ Failed to create chat session:', error);
     console.error('Error details:', {
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
@@ -123,9 +100,6 @@ Always base your answers on the product information provided above.`
   }
 }
 
-/**
- * Send a message and get AI response
- */
 export async function sendMessage(
   userMessage: string,
   streamCallback?: (chunk: string) => void
@@ -134,35 +108,38 @@ export async function sendMessage(
     throw new Error('No active chat session. Create a session first.');
   }
 
-  console.log('💬 Session exists, attempting to send message:', userMessage);
-
-  // Add user message to history
   const userChatMessage: ChatMessage = {
     id: Date.now().toString(),
     role: 'user',
     content: userMessage,
     timestamp: Date.now()
   };
-  
   currentSession.messages.push(userChatMessage);
-
   try {
     let assistantResponse = '';
 
     if (streamCallback) {
       console.log('🔄 Starting streaming response...');
-      
+
       // Stream the response
       const stream = currentSession.session.promptStreaming(userMessage);
-      
+
       console.log('📡 Stream created, iterating chunks...');
-      
+
+      // Accumulate chunks. Some streaming implementations emit incremental deltas
+      // (single tokens or short snippets). Append each chunk so the final
+      // assistantResponse contains the full output instead of only the last token.
       for await (const chunk of stream) {
-        console.log('📦 Received chunk, length:', chunk.length);
-        assistantResponse = chunk; // Each chunk is the full accumulated response
-        streamCallback(chunk);
+        try {
+          console.log('📦 Received chunk, length:', chunk.length);
+          assistantResponse += chunk;
+          // Send the accumulated content to the UI so it shows progressive output
+          streamCallback(assistantResponse);
+        } catch (e) {
+          console.warn('Error while processing stream chunk', e);
+        }
       }
-      
+
       console.log('✅ Streaming complete, final response length:', assistantResponse.length);
     } else {
       console.log('🔄 Getting non-streaming response...');
@@ -180,7 +157,7 @@ export async function sendMessage(
     
     currentSession.messages.push(assistantMessage);
 
-    // Keep only last 10 messages to manage context window
+
     if (currentSession.messages.length > 10) {
       currentSession.messages = currentSession.messages.slice(-10);
     }
@@ -247,6 +224,7 @@ export async function generateFollowUpQuestions(
     if (!ai || !ai.languageModel) {
       return getDefaultFollowUpQuestions(product);
     }
+    
 
     const availability = await ai.languageModel.availability();
     

@@ -21,7 +21,7 @@ const SOCIAL_MEDIA_DOMAINS = [
   "google.com"
 ];
 
-function normalizeUrl(src: string | null | undefined): string | null {
+export function normalizeUrl(src: string | null | undefined): string | null {
   if (!src) return null;
   try {
     const absoluteUrl = new URL(src, window.location.href).href;
@@ -127,7 +127,7 @@ export function isSocialMediaUrl(url: string): boolean {
   }
 }
 
-function sanitizeTextContent(rawText: string): string {
+export function sanitizeTextContent(rawText: string): string {
   const withoutLinks = rawText.replace(/\b(?:https?:\/\/|www\.)\S+/gi, "");
   return withoutLinks.replace(/\s+\n/g, "\n").replace(/\n{3,}/g, "\n\n");
 }

@@ -11,7 +11,6 @@ import {
   SparklesIcon,
   AlertCircleIcon,
 } from "lucide-react";
-import { SidebarHeaderMain } from "../shared/header";
 import { getAllSiteVisits, searchSiteVisitsWithAI } from "@/components/functions/db/site_visits_storage";
 import type { SiteVisit, SearchResult } from "@/components/functions/db.types";
 
@@ -154,7 +153,6 @@ export default function SearchHistory() {
 
   return (
     <div>
-      <SidebarHeaderMain />
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

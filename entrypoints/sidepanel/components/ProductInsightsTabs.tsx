@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Spinner } from "@/components/ui/spinner";
 import {
   ArrowUpRightIcon,
   CloudSlashIcon,
@@ -73,6 +74,7 @@ interface ProductInsightsTabsProps {
     price?: string;
     category: string;
   }>;
+  isLoadingRecommendations?: boolean; // Loading state for related products
 }
 
 export const ProductInsightsTabs: React.FC<ProductInsightsTabsProps> = ({
@@ -81,6 +83,7 @@ export const ProductInsightsTabs: React.FC<ProductInsightsTabsProps> = ({
   currentProduct,
   relatedProductIds = [],
   allProducts = [],
+  isLoadingRecommendations = false,
 }) => {
   const [dateRange, setDateRange] = useState<string>("all");
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
@@ -250,7 +253,14 @@ export const ProductInsightsTabs: React.FC<ProductInsightsTabsProps> = ({
 
       {/* Previous Products Tab */}
       <TabsContent value="previous" className="mt-3">
-        {relatedProducts.length > 0 ? (
+        {isLoadingRecommendations ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="flex flex-col items-center gap-3">
+              <Spinner className="w-6 h-6" />
+              <p className="text-sm text-muted-foreground">Finding related products...</p>
+            </div>
+          </div>
+        ) : relatedProducts.length > 0 ? (
           <div className="space-y-3">
             {/* Previous Products */}
             <div className="space-y-3">

@@ -329,9 +329,34 @@ export function EnhancedBrowsingStats() {
                     />
                   </TooltipTrigger>
                   <TooltipContent>
-                    <span className="text-xs">
-                      {item.label}: {formatTime(item.timeSpent)}
-                    </span>
+                    {item.category === "other" && otherCategories.length > 0 ? (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.fill }} />
+                          <div className="font-semibold text-xs">{item.label}</div>
+                        </div>
+                        <div className="text-xs text-muted-foreground mb-2">
+                          Time Spent: {formatTime(item.timeSpent)}
+                        </div>
+                        <div className="border-t pt-1.5 space-y-1">
+                          <div className="text-xs font-medium text-muted-foreground">Includes:</div>
+                          {otherCategories.map((cat, idx) => (
+                            <div key={idx} className="flex items-center justify-between gap-3 text-xs">
+                              <span className="text-muted-foreground">{cat.label}</span>
+                              <span className="font-medium">{formatTime(cat.timeSpent)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-xs">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.fill }} />
+                          <div className="font-semibold">{item.label}</div>
+                        </div>
+                        <div className="text-muted-foreground">Time Spent: {formatTime(item.timeSpent)}</div>
+                      </div>
+                    )}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -362,12 +387,67 @@ export function EnhancedBrowsingStats() {
           >
             <PieChart>
               <ChartTooltip
-                content={
-                  <ChartTooltipContent
-                    labelKey="category"
-                    formatter={(value) => formatTime(value as number)}
-                  />
-                }
+                content={({ active, payload }) => {
+                  if (!active || !payload || payload.length === 0) return null;
+                  
+                  const data = payload[0];
+                  const categoryName = data.name;
+                  const timeSpent = data.value as number;
+                  const categoryColor = data.payload.fill;
+                  
+                  // Check if this is the "Other" category
+                  if (categoryName === "Other" && otherCategories.length > 0) {
+                    return (
+                      <div className="rounded-lg border bg-background p-3 shadow-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: categoryColor }} />
+                          <div className="font-semibold text-sm">{categoryName}</div>
+                        </div>
+                        <div className="text-xs text-muted-foreground mb-2">
+                          Time Spent: {formatTime(timeSpent)}
+                        </div>
+                        <div className="border-t pt-2 mt-2 space-y-1">
+                          <div className="text-xs font-medium text-muted-foreground mb-1">Includes:</div>
+                          {otherCategories.map((cat, idx) => (
+                            <div key={idx} className="flex items-center justify-between gap-4 text-xs">
+                              <span className="text-muted-foreground">{cat.label}</span>
+                              <span className="font-medium">{formatTime(cat.timeSpent)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+                  
+                  // Find the full category data to get topDomains
+                  const categoryData = coloredCategories.find(cat => cat.label === categoryName);
+                  const topDomains = categoryData?.topDomains || [];
+                  
+                  // Regular category tooltip
+                  return (
+                    <div className="rounded-lg border bg-background p-3 shadow-lg min-w-[200px]">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: categoryColor }} />
+                        <div className="font-semibold text-sm">{categoryName}</div>
+                      </div>
+                      <div className="text-xs text-muted-foreground mb-2">
+                        Time Spent: {formatTime(timeSpent)}
+                      </div>
+                      
+                      {topDomains.length > 0 && (
+                        <div className="border-t pt-2 mt-2 space-y-1.5">
+                          <div className="text-xs font-medium text-muted-foreground mb-1">Top Sites:</div>
+                          {topDomains.slice(0, 3).map((site, idx) => (
+                            <div key={idx} className="flex items-center justify-between gap-3">
+                              <span className="text-xs text-muted-foreground truncate flex-1">{site.domain}</span>
+                              <span className="text-xs font-medium">{formatTime(site.timeSpent)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }}
               />
               <Pie
                 data={chartDataFormatted}
